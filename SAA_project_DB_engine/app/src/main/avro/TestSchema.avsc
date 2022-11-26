@@ -1,0 +1,14 @@
+{
+  "name": "TestSchema",
+  "type": "record",
+  "fields": [
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "password",
+      "type": "string"
+    }
+  ]
+}

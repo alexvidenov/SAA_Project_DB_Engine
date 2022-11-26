@@ -1,0 +1,38 @@
+{
+  "name": "HeapPageData",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "previousPageId",
+      "type": "int"
+    },
+    {
+      "name": "nextPageId",
+      "type": "int"
+    },
+    {
+      "name": "records",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "TableRow",
+          "fields": [
+            {
+              "name": "rowId",
+              "type": "int"
+            },
+            {
+              "name": "value",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

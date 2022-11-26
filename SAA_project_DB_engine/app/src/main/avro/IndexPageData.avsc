@@ -1,0 +1,50 @@
+{
+  "name": "HeapPageData",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "previousPageId",
+      "type": "int"
+    },
+    {
+      "name": "nextPageId",
+      "type": "int"
+    },
+    {
+      "name": "nodeType",
+      "type": {
+        "name": "NodeType",
+        "type": "enum",
+        "symbols": [
+          "RootNode",
+          "InternalNode",
+          "LeafNode"
+        ]
+      }
+    },
+    {
+      "name": "records",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "KeyValue",
+          "fields": [
+            {
+              "name": "key",
+              "type": "bytes"
+            },
+            {
+              "name": "value",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "PageMetadata",
+  "type": "record",
+  "fields": [
+    {
+      "name": "nextLogicalPageId",
+      "type": "int"
+    },
+    {
+      "name": "nextRowId",
+      "type": "int"
+    }
+  ]
+}

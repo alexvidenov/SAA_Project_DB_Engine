@@ -1,0 +1,14 @@
+{
+  "name": "TableRow",
+  "type": "record",
+  "fields": [
+    {
+      "name": "rowId",
+      "type": "int"
+    },
+    {
+      "name": "value",
+      "type": "bytes"
+    }
+  ]
+}
