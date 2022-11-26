@@ -1,10 +1,10 @@
 package com.example.saa_project_db_engine.db.managers.file
 
 import com.example.saa_project_db_engine.*
-import com.example.saa_project_db_engine.avro.PageMetadata
 import com.example.saa_project_db_engine.db.PageData
 import com.example.saa_project_db_engine.db.managers.file.extensions.getValue
 import com.example.saa_project_db_engine.db.managers.file.extensions.setValue
+import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import java.io.EOFException
 import java.io.RandomAccessFile
 import java.io.File
@@ -19,10 +19,7 @@ abstract class FileManager<T : PageData> protected constructor(
     companion object {
         @JvmStatic
         protected fun createPageMetadata(): PageMetadata {
-            val builder = PageMetadata.newBuilder()
-            builder.nextLogicalPageId = ROOT_PAGE_ID
-            builder.nextRowId = 0
-            return builder.build()
+            return PageMetadata(ROOT_PAGE_ID, 0)
         }
     }
 
@@ -30,8 +27,11 @@ abstract class FileManager<T : PageData> protected constructor(
     private val metadata = initialMetadata ?: loadMetadata()
     private val buffer = ByteArray(MAX_PAGE_SIZE)
 
-    var nextLogicalPageId: Int? by metadata
-    var nextRowId: Int? by metadata
+    var nextLogicalPageId: Int by metadata
+    var nextRowId: Int by metadata
+
+    val lastPageId: Int
+        get() = nextLogicalPageId - 1
 
     abstract fun readModel(pageId: Int): T?
 
@@ -57,18 +57,22 @@ abstract class FileManager<T : PageData> protected constructor(
         val metadataBuffer = ByteArray(METADATA_SIZE)
         file.seek(0)
         file.readFully(metadataBuffer)
-        return PageMetadata.fromByteBuffer(metadataBuffer.toByteBuffer())
+        return PageMetadata.fromBytes(metadataBuffer.toByteBuffer())
     }
 
     protected fun writeMetadata() {
         file.seek(0)
-        val byteBuffer = metadata.toByteBuffer()
+        val byteBuffer = metadata.toBytes()
         if (byteBuffer.limit() > METADATA_SIZE) throw Exception()
         file.write(byteBuffer.toByteArray())
     }
 
     private fun seekPage(id: Int) {
         val pos = id * MAX_PAGE_SIZE + METADATA_SIZE
+        file.seek(pos.toLong())
+    }
+
+    private fun seekPos(pos: Int) {
         file.seek(pos.toLong())
     }
 }

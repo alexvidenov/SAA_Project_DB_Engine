@@ -7,10 +7,10 @@ import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
 
 data class HeapPageData(
-    val id: Int,
-    val previousPageId: Int,
-    val nextPageId: Int,
-    val records: MutableList<TableRow>,
+    var id: Int,
+    var previousPageId: Int,
+    var nextPageId: Int,
+    var records: MutableList<TableRow>,
 ) : SchemaAware() {
 
     companion object {
@@ -25,7 +25,7 @@ data class HeapPageData(
             val records = record.get("records") as MutableList<*> // IndexedRecords
             val mapped = records.map {
                 val indexedRecord = it as IndexedRecord
-                val row = TableRow(indexedRecord.get(0) as Int, indexedRecord.get(1) as ByteBuffer)
+                val row = TableRow(indexedRecord.get(1) as ByteBuffer, indexedRecord.get(0) as Int)
                 row
             }.toMutableList()
             return HeapPageData(

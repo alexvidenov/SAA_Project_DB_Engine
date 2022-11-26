@@ -8,7 +8,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
 
-data class TableRow(var rowId: Int, var value: ByteBuffer) : SchemaAware(), IndexedRecord {
+data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware(), IndexedRecord {
 
     companion object {
         fun fromBytes(bytes: ByteBuffer): TableRow {
@@ -18,7 +18,7 @@ data class TableRow(var rowId: Int, var value: ByteBuffer) : SchemaAware(), Inde
             record.load(bytes)
             val rowId = record.get("rowId") as Int
             val value = record.get("value") as ByteBuffer
-            return TableRow(rowId, value)
+            return TableRow(value, rowId)
         }
     }
 
@@ -38,7 +38,7 @@ data class TableRow(var rowId: Int, var value: ByteBuffer) : SchemaAware(), Inde
 
     override fun get(i: Int): Any {
         if (i == 0) {
-            return this.rowId
+            return this.rowId!!
         } else if (i == 1) {
             return this.value
         }

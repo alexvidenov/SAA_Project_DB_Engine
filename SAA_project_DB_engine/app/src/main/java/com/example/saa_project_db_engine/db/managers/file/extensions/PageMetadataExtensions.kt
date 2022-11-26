@@ -1,6 +1,6 @@
 package com.example.saa_project_db_engine.db.managers.file.extensions
 
-import com.example.saa_project_db_engine.avro.PageMetadata
+import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import com.example.saa_project_db_engine.safeCapitalize
 import kotlin.reflect.KProperty
 

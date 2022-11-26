@@ -1,8 +1,10 @@
 package com.example.saa_project_db_engine.db.managers.file
 
-import com.example.saa_project_db_engine.avro.PageMetadata
-import com.example.saa_project_db_engine.avro.TableRow
+
+import android.util.Log
+import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
+import com.example.saa_project_db_engine.db.storage.models.TableRow
 import java.io.File
 import java.lang.Exception
 import java.nio.ByteBuffer
@@ -33,9 +35,7 @@ class HeapFileManager private constructor(
         } else {
             freePage.nextId ?: throw Exception()
         }
-        if (nextRowId != null) {
-            nextRowId = nextRowId!! + initialRecords.size
-        }
+        nextRowId += initialRecords.size
         writeMetadata()
         return HeapLogicalPage.new(freePageId, initialRecords)
     }
@@ -51,5 +51,7 @@ class HeapFileManager private constructor(
 
     override fun writeModel(model: HeapLogicalPage) {
         writeBuffer(model.id, model.dump())
+        Log.d("TEST", "NEXT ROW ID IN HEAP MANAGER IS :${nextRowId}")
+        writeMetadata() // updates next system-maintained rowId
     }
 }

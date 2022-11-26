@@ -8,8 +8,7 @@ import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 abstract class PageManager<T : PageData>(protected open val fileManager: FileManager<T>) {
     protected val pool = hashMapOf<Int, T>()
 
-    fun get(id: Int?): T? {
-        if (id == null) return null
+    fun get(id: Int): T? {
         return if (pool.contains(id)) {
             pool[id]
         } else {

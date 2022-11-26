@@ -1,9 +1,9 @@
 package com.example.saa_project_db_engine.db.managers.page
 
-import com.example.saa_project_db_engine.ROOT_PAGE_ID
-import com.example.saa_project_db_engine.avro.TableRow
+import android.util.Log
 import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
+import com.example.saa_project_db_engine.db.storage.models.TableRow
 
 class HeapPageManager constructor(override val fileManager: HeapFileManager) :
     PageManager<HeapLogicalPage>(fileManager) {
@@ -15,8 +15,10 @@ class HeapPageManager constructor(override val fileManager: HeapFileManager) :
     }
 
     fun insertRow(row: TableRow) {
-        val lastPage = get(fileManager.nextLogicalPageId?.minus(1))
-        lastPage?.insert(fileManager.nextRowId ?: 0, row)
+        val lastPage = get(fileManager.lastPageId)
+        row.rowId = fileManager.nextRowId
+        fileManager.nextRowId++
+        lastPage?.insert(row)
         commit(lastPage)
     }
 }
