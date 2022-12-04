@@ -1,6 +1,6 @@
 package com.example.saa_project_db_engine.db.managers.file.models
 
-import com.example.saa_project_db_engine.models.SchemaAware
+import com.example.saa_project_db_engine.db.base.SchemaAware
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import java.nio.ByteBuffer

@@ -1,9 +1,7 @@
 package com.example.saa_project_db_engine.db.storage.models.extensions
 
 import com.example.saa_project_db_engine.db.storage.models.HeapPageData
-import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.safeCapitalize
-import com.example.saa_project_db_engine.toAvroBytesSize
 import kotlin.reflect.KProperty
 
 enum class PageDataProperties {
@@ -24,8 +22,4 @@ operator fun <T> HeapPageData.setValue(thisRef: Any, property: KProperty<*>, val
         PageDataProperties.PreviousId -> (value as Int?)?.let { previousPageId = it }
         PageDataProperties.NextId -> (value as Int?)?.let { nextPageId = it }
     }
-}
-
-fun TableRow.toAvroBytesSize(): Int {
-    return rowId!!.toAvroBytesSize() + value.toAvroBytesSize()
 }

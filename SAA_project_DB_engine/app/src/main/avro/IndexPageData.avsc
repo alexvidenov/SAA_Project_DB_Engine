@@ -16,15 +16,7 @@
     },
     {
       "name": "nodeType",
-      "type": {
-        "name": "NodeType",
-        "type": "enum",
-        "symbols": [
-          "RootNode",
-          "InternalNode",
-          "LeafNode"
-        ]
-      }
+      "type": "string"
     },
     {
       "name": "records",

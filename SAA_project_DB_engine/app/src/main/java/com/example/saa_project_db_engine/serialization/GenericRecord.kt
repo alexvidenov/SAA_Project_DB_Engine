@@ -19,7 +19,7 @@ open class GenericRecord(sch: Schema) : GenericData.Record(sch) {
         return io.encode(this)
     }
 
-    class IO(private val schema: Schema) {
+    inner class IO(private val schema: Schema) {
         init {
             if (schema.type != Schema.Type.RECORD) {
                 throw IllegalArgumentException("Schema type must be record: $schema")

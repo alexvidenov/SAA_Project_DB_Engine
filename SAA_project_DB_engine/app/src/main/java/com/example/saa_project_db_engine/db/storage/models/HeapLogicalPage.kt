@@ -1,18 +1,11 @@
 package com.example.saa_project_db_engine.db.storage.models
 
-import com.example.saa_project_db_engine.MAX_PAGE_SIZE
-import com.example.saa_project_db_engine.db.PageData
-import com.example.saa_project_db_engine.db.PageFullException
-import com.example.saa_project_db_engine.db.PageInsertingMinimumException
-import com.example.saa_project_db_engine.db.storage.models.extensions.getValue
-import com.example.saa_project_db_engine.db.storage.models.extensions.setValue
-import com.example.saa_project_db_engine.db.storage.models.extensions.toAvroBytesSize
-import com.example.saa_project_db_engine.toLengthAvroByteSize
+import com.example.saa_project_db_engine.db.base.LogicalPage
 import java.nio.ByteBuffer
 
 class HeapLogicalPage private constructor(
-    private val data: HeapPageData
-) : PageData() {
+    data: HeapPageData
+) : LogicalPage<TableRow, HeapPageData>(data) {
     companion object {
         private val emptyPageData = createHeapLogicalPageData(-1, mutableListOf())
 
@@ -34,49 +27,7 @@ class HeapLogicalPage private constructor(
 
     }
 
-    override val id: Int by data
-    override var previousId: Int? by data
-    override var nextId: Int? by data
-
-    val records: MutableList<TableRow> get() = data.records
-    val size: Int get() = byteSize
-
-    private var byteSize = dump().limit()
-
-    fun dump(): ByteBuffer = data.toBytes()
-
-    fun insert(row: TableRow) {
-        val newByteSize = calcPageSize(row.toAvroBytesSize(), 1)
-        data.records.add(row)
-        byteSize = newByteSize
-        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
-    }
-
-    fun update(index: Int, newKeyValue: TableRow) {
-        val oldKeyValue = data.records[index]
-        val newByteSize =
-            calcPageSize(newKeyValue.toAvroBytesSize() - oldKeyValue.toAvroBytesSize())
-        data.records[index] = newKeyValue
-        byteSize = newByteSize
-        if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
-    }
-
-    fun delete(index: Int): TableRow {
-        val keyValue = data.records[index]
-        val newByteSize = calcPageSize(-keyValue.toAvroBytesSize(), -1)
-        data.records.removeAt(index)
-        byteSize = newByteSize
-        return keyValue
-    }
-
-    private fun calcPageSize(changingBytes: Int, changingLength: Int = 0): Int {
-        return byteSize + changingBytes + calcChangingLengthBytes(changingLength)
-    }
-
-    private fun calcChangingLengthBytes(changingLength: Int): Int {
-        if (changingLength == 0) return 0
-        val newLength = records.size + changingLength
-        return newLength.toLengthAvroByteSize() - records.size.toLengthAvroByteSize()
-    }
+    override val overheadSize: Int
+        get() = HeapLogicalPage.overheadSize
 
 }

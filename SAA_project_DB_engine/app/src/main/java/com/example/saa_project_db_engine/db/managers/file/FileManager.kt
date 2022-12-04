@@ -1,17 +1,19 @@
 package com.example.saa_project_db_engine.db.managers.file
 
 import com.example.saa_project_db_engine.*
-import com.example.saa_project_db_engine.db.PageData
+import com.example.saa_project_db_engine.db.base.PageData
 import com.example.saa_project_db_engine.db.managers.file.extensions.getValue
 import com.example.saa_project_db_engine.db.managers.file.extensions.setValue
 import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
+import com.example.saa_project_db_engine.db.base.WithByteUtils
+import com.example.saa_project_db_engine.db.base.LogicalPage
 import java.io.EOFException
 import java.io.RandomAccessFile
 import java.io.File
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-abstract class FileManager<T : PageData> protected constructor(
+abstract class FileManager<R : WithByteUtils, D : PageData<R>, T : LogicalPage<R, D>>protected constructor(
     file: File,
     initialMetadata: PageMetadata? = null
 ) {
@@ -69,10 +71,6 @@ abstract class FileManager<T : PageData> protected constructor(
 
     private fun seekPage(id: Int) {
         val pos = id * MAX_PAGE_SIZE + METADATA_SIZE
-        file.seek(pos.toLong())
-    }
-
-    private fun seekPos(pos: Int) {
         file.seek(pos.toLong())
     }
 }

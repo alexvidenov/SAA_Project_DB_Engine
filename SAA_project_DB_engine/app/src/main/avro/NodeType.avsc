@@ -1,9 +1,10 @@
 {
   "name": "NodeType",
-  "type": "enum",
-  "symbols": [
-    "RootNode",
-    "InternalNode",
-    "LeafNode"
+  "type": "record",
+  "fields": [
+    {
+      "name": "nodeType",
+      "type": "string"
+    }
   ]
 }

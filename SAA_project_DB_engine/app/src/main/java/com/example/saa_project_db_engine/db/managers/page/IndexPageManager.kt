@@ -1,4 +1,12 @@
 package com.example.saa_project_db_engine.db.managers.page
 
-class IndexPageManager {
+import com.example.saa_project_db_engine.db.indexing.models.IndexLogicalPage
+import com.example.saa_project_db_engine.db.indexing.models.IndexPageData
+import com.example.saa_project_db_engine.db.indexing.models.KeyValue
+import com.example.saa_project_db_engine.db.managers.PageManager
+import com.example.saa_project_db_engine.db.managers.file.IndexFileManager
+
+class IndexPageManager constructor(override val fileManager: IndexFileManager) :
+    PageManager<KeyValue, IndexPageData, IndexLogicalPage>(fileManager) {
+
 }

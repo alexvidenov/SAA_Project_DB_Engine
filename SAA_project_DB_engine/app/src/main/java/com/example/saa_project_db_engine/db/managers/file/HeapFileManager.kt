@@ -4,7 +4,9 @@ package com.example.saa_project_db_engine.db.managers.file
 import android.util.Log
 import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
+import com.example.saa_project_db_engine.db.storage.models.HeapPageData
 import com.example.saa_project_db_engine.db.storage.models.TableRow
+import com.example.saa_project_db_engine.serialization.Table
 import java.io.File
 import java.lang.Exception
 import java.nio.ByteBuffer
@@ -12,7 +14,7 @@ import java.nio.ByteBuffer
 class HeapFileManager private constructor(
     file: File,
     metadata: PageMetadata? = null
-) : FileManager<HeapLogicalPage>(file, metadata) {
+) : FileManager<TableRow, HeapPageData, HeapLogicalPage>(file, metadata) {
 
     companion object {
         fun new(file: File): HeapFileManager {
@@ -28,7 +30,7 @@ class HeapFileManager private constructor(
     fun allocateNewHeapLogicalPage(
         initialRecords: MutableList<TableRow>
     ): HeapLogicalPage {
-        val freePageId = nextLogicalPageId ?: throw Exception()
+        val freePageId = nextLogicalPageId
         val freePage = readModel(freePageId)
         nextLogicalPageId = if (freePage == null) {
             freePageId + 1
@@ -52,6 +54,6 @@ class HeapFileManager private constructor(
     override fun writeModel(model: HeapLogicalPage) {
         writeBuffer(model.id, model.dump())
         Log.d("TEST", "NEXT ROW ID IN HEAP MANAGER IS :${nextRowId}")
-        writeMetadata() // updates next system-maintained rowId
+        writeMetadata() // persists next system-maintained rowId
     }
 }

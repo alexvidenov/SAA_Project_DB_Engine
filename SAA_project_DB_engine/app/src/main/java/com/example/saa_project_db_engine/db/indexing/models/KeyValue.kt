@@ -1,4 +1,4 @@
-package com.example.saa_project_db_engine.db.storage.models
+package com.example.saa_project_db_engine.db.indexing.models
 
 import com.example.saa_project_db_engine.db.base.SchemaAware
 import com.example.saa_project_db_engine.db.base.WithByteUtils
@@ -9,26 +9,19 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
 
-data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware(), IndexedRecord,
+data class KeyValue(val key: ByteBuffer, val value: ByteBuffer) : SchemaAware(), IndexedRecord,
     WithByteUtils {
 
     companion object {
-        fun fromBytes(bytes: ByteBuffer): TableRow {
+        fun fromBytes(bytes: ByteBuffer): KeyValue {
             val schema =
                 SchemasServiceLocator.getSchemaFor(this::class.java.declaringClass.simpleName)
             val record = GenericRecord(schema)
             record.load(bytes)
-            val rowId = record.get("rowId") as Int
+            val key = record.get("key") as ByteBuffer
             val value = record.get("value") as ByteBuffer
-            return TableRow(value, rowId)
+            return KeyValue(key, value)
         }
-    }
-
-    fun toBytes(): ByteBuffer {
-        val record = GenericRecord(fileSchema)
-        record.put("rowId", rowId)
-        record.put("value", value)
-        return record.toByteBuffer()
     }
 
     override fun getSchema(): Schema {
@@ -40,17 +33,17 @@ data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware()
 
     override fun get(i: Int): Any {
         return when (i) {
-            0 -> this.rowId!!
+            0 -> this.key
             1 -> this.value
             else -> {}
         }
     }
 
     override fun toAvroBytesSize(): Int {
-        return rowId!!.toAvroBytesSize() + value.toAvroBytesSize()
+        return this.key.toAvroBytesSize() + this.value.toAvroBytesSize()
     }
 
     override fun empty(): WithByteUtils {
-        return TableRow(ByteBuffer.allocate(0), -1)
+        return KeyValue(ByteBuffer.allocate(0), ByteBuffer.allocate(0))
     }
 }

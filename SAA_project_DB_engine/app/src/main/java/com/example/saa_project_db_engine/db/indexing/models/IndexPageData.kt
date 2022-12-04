@@ -1,36 +1,45 @@
-package com.example.saa_project_db_engine.db.storage.models
+package com.example.saa_project_db_engine.db.indexing.models
 
 import com.example.saa_project_db_engine.db.base.PageData
+import com.example.saa_project_db_engine.db.base.SchemaAware
+import com.example.saa_project_db_engine.db.storage.models.HeapPageData
+import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
 
-data class HeapPageData(
+data class IndexPageData(
     override var id: Int,
     override var previousPageId: Int,
     override var nextPageId: Int,
-    override var records: MutableList<TableRow>,
-) : PageData<TableRow>() {
+    var nodeType: NodeType,
+    override var records: MutableList<KeyValue>,
+) : PageData<KeyValue>() {
 
     companion object {
-        fun fromBytes(bytes: ByteBuffer): HeapPageData {
-            val record =
-                GenericRecord(SchemasServiceLocator.getSchemaFor(this::class.java.declaringClass.simpleName))
+        fun fromBytes(bytes: ByteBuffer): IndexPageData {
+            val schema =
+                SchemasServiceLocator.getSchemaFor(this::class.java.declaringClass.simpleName)
+            val record = GenericRecord(schema)
             record.load(bytes)
             val id = record.get("id") as Int
             val previousPageId = record.get("previousPageId") as Int
             val nextPageId = record.get("nextPageId") as Int
+            val nodeTypeString = record.get("nodeType") as String
+            val nodeType = NodeType.fromString(nodeTypeString)
             val records = record.get("records") as MutableList<*>
             val mapped = records.map {
                 val indexedRecord = it as IndexedRecord
-                val row = TableRow(indexedRecord.get(1) as ByteBuffer, indexedRecord.get(0) as Int)
+                val row =
+                    KeyValue(indexedRecord.get(1) as ByteBuffer, indexedRecord.get(0) as ByteBuffer)
                 row
             }.toMutableList()
-            return HeapPageData(
+            return IndexPageData(
                 id,
                 previousPageId,
                 nextPageId,
+                nodeType,
                 mapped
             )
         }
@@ -42,7 +51,7 @@ data class HeapPageData(
         record.put("previousPageId", previousPageId)
         record.put("nextPageId", nextPageId)
         record.put("records", records)
+        record.put("nodeType", nodeType.toString())
         return record.toByteBuffer()
     }
-
 }
