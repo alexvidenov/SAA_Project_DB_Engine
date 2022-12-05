@@ -76,7 +76,7 @@ sealed class WhereClauseType {
 }
 
 
-fun test() {
+fun logicalOperationInit() {
 //    cond1 &&
 //            AND OR AND
 //    var yielded = record.get("op1") >= op2 || record.get("op1") <= op2
