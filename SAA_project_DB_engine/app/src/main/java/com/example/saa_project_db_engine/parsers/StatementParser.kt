@@ -281,38 +281,70 @@ class StatementParser {
                     state.query.currentCond = currentCond
                     state.pop()
 
-                    if (state.query.operations.isNotEmpty()) {
-                        val op = state.query.operations[state.query.operations.size - 1]
-                        op.rightNode = currentCond
+                    if (state.query.isParsingSubExpr) {
+                        if (state.query.currentSubExprOperations != null) {
+                            val operation =
+                                state.query.currentSubExprOperations!![state.query.currentSubExprOperations!!.size - 1]
+                            operation.rightNode = state.query.currentCond
+                            state.query.currentSubExprOperations!![state.query.currentSubExprOperations!!.size - 1] =
+                                operation
+                        }
+                    } else {
+                        if (state.query.operations.isNotEmpty()) {
+                            val operation =
+                                state.query.operations[state.query.operations.size - 1]
+                            operation.rightNode = state.query.currentCond
+                            state.query.operations[state.query.operations.size - 1] =
+                                operation
+                        }
                     }
 
                     when (state.peek()) {
                         "AND" -> {
                             state.pop()
                             val op = WhereClauseType.LogicalOperation(LogicalOperator.AND)
-                            if (state.query.operations.isEmpty()) {
-                                val leftNode = state.query.currentCond
-                                op.leftNode = leftNode
-                                // assign leftnode or leftsubexpr depending on whether we're parsing subExpr
+
+                            if (state.query.isParsingSubExpr) {
+                                if (state.query.currentSubExprOperations == null) {
+                                    state.query.currentSubExprOperations = mutableListOf()
+                                    val leftNode = state.query.currentCond
+                                    op.leftNode = leftNode
+                                    state.query.currentSubExprOperations!!.add(op)
+                                }
+                            } else {
+                                if (state.query.operations.isEmpty()) {
+                                    if (state.query.currentSubExprOperations != null) { // subexpr performed
+                                        op.leftSubExpr = state.query.currentSubExprOperations
+                                        state.query.currentSubExprOperations = null
+                                    } else {
+                                        val leftNode = state.query.currentCond
+                                        op.leftNode = leftNode
+                                    }
+                                }
+                                state.query.operations.add(op)
                             }
-                            state.query.currentLogicalSubExpr = op
-                            state.query.operations.add(op)
                             state.step = ParseStateStep.WhereField
                         }
                         "OR" -> {
+                            // TODO: same as and
                             state.pop()
                             val op = WhereClauseType.LogicalOperation(LogicalOperator.OR)
                             if (state.query.operations.isEmpty()) {
                                 val leftNode = state.query.currentCond
                                 op.leftNode = leftNode
                             }
-                            state.query.currentLogicalSubExpr = op
                             state.query.operations.add(op)
                             state.step = ParseStateStep.WhereField
                         }
                         ")" -> {
                             state.query.isParsingSubExpr = false
-                            // add current sub expr
+                            val nextLogicalSubExpr = state.peek()
+                            if (nextLogicalSubExpr == "AND" || nextLogicalSubExpr == "OR") {
+                                state.pop()
+                                state.step = ParseStateStep.WhereField
+                            } else {
+                                // break
+                            }
                         }
                         else -> {
                             state.pop()

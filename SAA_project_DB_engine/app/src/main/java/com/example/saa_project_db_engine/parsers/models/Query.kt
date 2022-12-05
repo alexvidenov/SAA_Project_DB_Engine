@@ -1,5 +1,7 @@
 package com.example.saa_project_db_engine.parsers.models
 
+import android.drm.DrmStore.RightsStatus
+
 enum class QueryType {
     Undefined, CreateTable, DropTable, ListTables, TableInfo, CreateIndex, DropIndex, Insert, Select, Update, Delete
 }
@@ -48,7 +50,9 @@ enum class LogicalOperator {
 
     Select Name, DateBirth FROM Sample WHERE Id == 5 AND DateBirth > “01.01.2000”.
 
-    Parse either full subexpr (thing) or just expr. Track both
+    Parse either full subexpr (thing) or just expr. Track both.
+
+    (
  */
 
 sealed class WhereClauseType {
@@ -56,8 +60,8 @@ sealed class WhereClauseType {
         var operator: LogicalOperator? = null,
         var leftNode: Condition? = null, // always null in case of NOT
         var rightNode: Condition? = null,
-        var leftSubExpr: LogicalOperation? = null,
-        var rightSubExpr: LogicalOperation? = null,
+        var leftSubExpr: MutableList<LogicalOperation>? = null,
+        var rightSubExpr: MutableList<LogicalOperation>? = null,
         var hasPrecedence: Boolean = false
     ) : WhereClauseType()
 
@@ -92,11 +96,9 @@ data class Query(
     var inserts: MutableList<MutableList<String>> = mutableListOf(),
     var fields: MutableList<String> = mutableListOf(),
     var schema: MutableList<FieldSchemaDefinition> = mutableListOf(),
-    // refactor to be conditions
-    var conditions: MutableList<WhereClauseType.Condition> = mutableListOf(),
     var currentCond: WhereClauseType.Condition = WhereClauseType.Condition(),
-    var currentLogicalSubExpr: WhereClauseType.LogicalOperation? = null,
     var isParsingSubExpr: Boolean = false,
     var operations: MutableList<WhereClauseType.LogicalOperation> = mutableListOf(),
+    var currentSubExprOperations: MutableList<WhereClauseType.LogicalOperation>? = null,
     var err: String? = null
 )
