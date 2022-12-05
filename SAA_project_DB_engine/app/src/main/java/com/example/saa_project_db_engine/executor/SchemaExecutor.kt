@@ -6,6 +6,7 @@ import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.parsers.models.FieldSchemaDefinition
 import com.example.saa_project_db_engine.parsers.models.Query
 import com.example.saa_project_db_engine.parsers.models.QueryType
+import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
 import kotlin.math.log
 
@@ -34,7 +35,7 @@ class SchemaExecutor constructor(private val ctx: Context) {
                 handleInsert(query.table, query.fields, query.inserts)
             }
             QueryType.Select -> {
-                handleSelect(query.table, query.fields)
+                handleSelect(query.table, query.fields, query.operations)
             }
             QueryType.Update -> TODO()
             QueryType.Delete -> TODO()
@@ -86,8 +87,9 @@ class SchemaExecutor constructor(private val ctx: Context) {
     private fun handleSelect(
         tableName: String,
         fields: MutableList<String>,
+        conditions: MutableList<WhereClauseType.LogicalOperation>
     ) {
-        tableService.select(tableName, fields)
+        tableService.select(tableName, fields, conditions)
     }
 
     fun test() {

@@ -73,7 +73,9 @@ data class ParseStmtState(
     }
 
     fun peekQuotedStringWithLength(): PeekWithLengthReturn {
-        if (sql.length < pos || sql[pos] != '\'') {
+        Log.d("TEST", "sql[pos] ${sql[pos]}")
+        if (sql.length < pos || sql[pos] != '\'' && sql[pos] == ')') {
+            Log.d("TEST", "DA GO TAKOVAM")
             return PeekWithLengthReturn("", 0)
         }
         for (i in (pos + 1) until sql.length) {

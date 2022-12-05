@@ -232,11 +232,21 @@ class StatementParser {
                     when (val word = state.peek()) {
                         "NOT" -> {
                             state.pop()
-                            state.query.operations.add(
-                                WhereClauseType.LogicalOperation(
-                                    LogicalOperator.NOT
-                                )
+                            val op = WhereClauseType.LogicalOperation(
+                                LogicalOperator.NOT
                             )
+                            if (state.query.isParsingSubExpr) {
+                                if (state.query.currentSubExprOperations != null) {
+                                    state.query.currentSubExprOperations!!.add(op)
+                                } else {
+                                    state.query.currentSubExprOperations = mutableListOf()
+                                    state.query.currentSubExprOperations!!.add(op)
+                                }
+                            } else {
+                                state.query.operations.add(
+                                    op
+                                )
+                            }
                             state.step = ParseStateStep.WhereField
                         }
                         "(" -> {
@@ -275,8 +285,11 @@ class StatementParser {
                         currentCond.operand2Type = ConditionType.FIELD
                     } else {
                         val peeked = state.peekQuotedStringWithLength()
-                        currentCond.operand2 = peeked.content
-                        currentCond.operand2Type = ConditionType.LITERAL
+                        Log.d("TEST", "PEEKED: $peeked")
+                        if (peeked.length != 0) {
+                            currentCond.operand2 = peeked.content
+                            currentCond.operand2Type = ConditionType.LITERAL
+                        }
                     }
                     state.query.currentCond = currentCond
                     state.pop()
@@ -288,23 +301,45 @@ class StatementParser {
                             operation.rightNode = state.query.currentCond
                             state.query.currentSubExprOperations!![state.query.currentSubExprOperations!!.size - 1] =
                                 operation
+
+                            if (state.query.operations.isNotEmpty()) {
+                                val op =
+                                    state.query.operations[state.query.operations.size - 1]
+                                op.rightSubExpr = state.query.currentSubExprOperations
+                                state.query.operations[state.query.operations.size - 1] = op
+                            }
                         }
                     } else {
                         if (state.query.operations.isNotEmpty()) {
-                            val operation =
-                                state.query.operations[state.query.operations.size - 1]
-                            operation.rightNode = state.query.currentCond
-                            state.query.operations[state.query.operations.size - 1] =
-                                operation
+                            if (state.query.currentSubExprOperations != null) {
+                                val op =
+                                    state.query.operations[state.query.operations.size - 1]
+                                op.rightSubExpr = state.query.currentSubExprOperations
+                                state.query.operations[state.query.operations.size - 1] = op
+                            } else {
+                                val operation =
+                                    state.query.operations[state.query.operations.size - 1]
+                                operation.rightNode = state.query.currentCond
+                                state.query.operations[state.query.operations.size - 1] =
+                                    operation
+                            }
                         }
                     }
 
                     when (state.peek()) {
                         "AND" -> {
-                            logicalOperationInit(WhereClauseType.LogicalOperation(LogicalOperator.AND))
+                            logicalOperationInit(
+                                WhereClauseType.LogicalOperation(
+                                    LogicalOperator.AND
+                                )
+                            )
                         }
                         "OR" -> {
-                            logicalOperationInit(WhereClauseType.LogicalOperation(LogicalOperator.OR))
+                            logicalOperationInit(
+                                WhereClauseType.LogicalOperation(
+                                    LogicalOperator.OR
+                                )
+                            )
                         }
                         ")" -> {
                             state.query.isParsingSubExpr = false

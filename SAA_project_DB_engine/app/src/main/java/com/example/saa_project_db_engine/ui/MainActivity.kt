@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         val parser = StatementParser()
         val query =
-            parser.parseQuery("Select Name, DateBirth FROM Sample WHERE (Id == '5' OR DateBirth > '01.01.2000') AND NOT Id == '6'")
+            parser.parseQuery("Select Name, DateBirth FROM Sample WHERE (Id == '5' OR DateBirth > '01.01.2000') AND (NOT Id == '6')")
         Log.d("TEST", "QUERY: $query")
     }
 }

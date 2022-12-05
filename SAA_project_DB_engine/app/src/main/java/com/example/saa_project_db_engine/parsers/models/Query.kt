@@ -62,7 +62,6 @@ sealed class WhereClauseType {
         var rightNode: Condition? = null,
         var leftSubExpr: MutableList<LogicalOperation>? = null,
         var rightSubExpr: MutableList<LogicalOperation>? = null,
-        var hasPrecedence: Boolean = false
     ) : WhereClauseType()
 
     data class Condition(
@@ -97,8 +96,8 @@ data class Query(
     var fields: MutableList<String> = mutableListOf(),
     var schema: MutableList<FieldSchemaDefinition> = mutableListOf(),
     var currentCond: WhereClauseType.Condition = WhereClauseType.Condition(),
-    var isParsingSubExpr: Boolean = false,
     var operations: MutableList<WhereClauseType.LogicalOperation> = mutableListOf(),
     var currentSubExprOperations: MutableList<WhereClauseType.LogicalOperation>? = null,
+    var isParsingSubExpr: Boolean = false,
     var err: String? = null
 )

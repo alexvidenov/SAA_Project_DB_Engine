@@ -7,7 +7,12 @@ import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.managers.page.HeapPageManager
 import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.TableRow
+import com.example.saa_project_db_engine.parsers.models.ConditionType
+import com.example.saa_project_db_engine.parsers.models.LogicalOperator
+import com.example.saa_project_db_engine.parsers.models.Operator
+import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.serialization.GenericRecord
+import com.google.android.material.tabs.TabLayout.Tab
 import org.apache.avro.Schema
 import java.io.File
 
@@ -92,7 +97,9 @@ class TableService constructor(private val ctx: Context) {
             Schema.Type.DOUBLE -> {
                 value.toDouble()
             }
-            Schema.Type.BOOLEAN -> TODO()
+            Schema.Type.BOOLEAN -> {
+                value.toBoolean()
+            }
             else -> {}
         }
     }
@@ -105,7 +112,11 @@ class TableService constructor(private val ctx: Context) {
 
     }
 
-    fun select(tableName: String, fields: List<String>): SelectResultModel {
+    fun select(
+        tableName: String,
+        fields: List<String>,
+        conditions: List<WhereClauseType.LogicalOperation>
+    ): SelectResultModel {
         loadTable(tableName)
         val data = managerPool[tableName]!!
 
@@ -125,6 +136,58 @@ class TableService constructor(private val ctx: Context) {
 
                     Log.d("TEST", "${it.value} ${it.rowId}")
                     record.load(it.value)
+
+                    conditions.forEach { logicOp ->
+                        var leftSubRes: Boolean = true
+                        logicOp.leftSubExpr?.let { expr ->
+                            expr.forEach { op ->
+                                when (op.operator) {
+                                    LogicalOperator.AND -> {
+                                        op.leftNode?.let { cond ->
+                                            var op1: Any? = null
+                                            var op2: Any? = null
+                                            var res: Boolean = false
+                                            when (cond.operand1Type) {
+                                                ConditionType.LITERAL -> {
+                                                    op1 = cond.operand1
+                                                }
+                                                ConditionType.FIELD -> {
+                                                    op1 = record.get(cond.operand1)
+                                                }
+                                                else -> {}
+                                            }
+                                            when (cond.operand2Type) {
+                                                ConditionType.LITERAL -> {
+                                                    op2 = cond.operand2
+                                                }
+                                                ConditionType.FIELD -> {
+                                                    op2 = record.get(cond.operand2)
+                                                }
+                                                else -> {}
+                                            }
+                                            when (cond.operator) {
+                                                Operator.Eq -> res = op1 == op2
+                                                Operator.Ne -> res = op1 != op2
+                                                Operator.Gt -> TODO()
+                                                Operator.Lt -> TODO()
+                                                Operator.Gte -> TODO()
+                                                Operator.Lte -> TODO()
+                                                else -> {}
+                                            }
+                                        }
+                                    }
+                                    LogicalOperator.OR -> {
+
+                                    }
+                                    LogicalOperator.NOT -> {
+
+                                    }
+                                    else -> {}
+                                }
+                            }
+                        }
+
+                    }
 
                     val array = mutableListOf<String>()
                     fields.forEach { f ->
@@ -147,6 +210,10 @@ class TableService constructor(private val ctx: Context) {
         Log.d("TEST", "SELECT RESULT MODEL: $model")
 
         return model
+    }
+
+    private fun applyConditions(row: TableRow) {
+
     }
 
     fun test() {
