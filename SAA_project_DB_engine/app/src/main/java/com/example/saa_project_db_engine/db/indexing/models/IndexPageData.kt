@@ -1,9 +1,7 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
 import com.example.saa_project_db_engine.db.base.PageData
-import com.example.saa_project_db_engine.db.base.SchemaAware
-import com.example.saa_project_db_engine.db.storage.models.HeapPageData
-import com.example.saa_project_db_engine.db.storage.models.TableRow
+import com.example.saa_project_db_engine.db.indexing.models.nodes.NodeType
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import org.apache.avro.generic.IndexedRecord

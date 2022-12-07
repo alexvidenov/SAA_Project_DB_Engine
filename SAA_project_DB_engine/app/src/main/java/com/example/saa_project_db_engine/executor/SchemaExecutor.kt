@@ -14,6 +14,8 @@ class SchemaExecutor constructor(private val ctx: Context) {
     private val tableService = TableService(ctx)
     private val parser = StatementParser()
 
+    // flows here to emit UI data
+
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
         Log.d("TEST", "PARSED QUERY: $parsed")

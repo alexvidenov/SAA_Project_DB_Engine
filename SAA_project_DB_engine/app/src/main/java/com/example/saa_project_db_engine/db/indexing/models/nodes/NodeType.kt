@@ -1,4 +1,4 @@
-package com.example.saa_project_db_engine.db.indexing.models
+package com.example.saa_project_db_engine.db.indexing.models.nodes
 
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator

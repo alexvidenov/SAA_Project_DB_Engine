@@ -6,10 +6,7 @@ import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.HeapPageData
 import com.example.saa_project_db_engine.db.storage.models.TableRow
-import com.example.saa_project_db_engine.serialization.Table
 import java.io.File
-import java.lang.Exception
-import java.nio.ByteBuffer
 
 class HeapFileManager private constructor(
     file: File,
@@ -35,7 +32,7 @@ class HeapFileManager private constructor(
         nextLogicalPageId = if (freePage == null) {
             freePageId + 1
         } else {
-            freePage.nextId ?: throw Exception()
+            freePage.nextId
         }
         nextRowId += initialRecords.size
         writeMetadata()

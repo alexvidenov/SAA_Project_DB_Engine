@@ -101,3 +101,12 @@ data class Query(
     var isParsingSubExpr: Boolean = false,
     var err: String? = null
 )
+
+enum class LogicalOperationParseResultEmpty {
+    NONE, LEFT, RIGHT
+}
+
+data class LogicalOperationParseResult(
+    val result: Boolean,
+    val empty: LogicalOperationParseResultEmpty
+)

@@ -1,9 +1,7 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
 import com.example.saa_project_db_engine.db.base.LogicalPage
-import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
-import com.example.saa_project_db_engine.db.storage.models.HeapPageData
-import com.example.saa_project_db_engine.db.storage.models.TableRow
+import com.example.saa_project_db_engine.db.indexing.models.nodes.NodeType
 import java.nio.ByteBuffer
 
 class IndexLogicalPage private constructor(

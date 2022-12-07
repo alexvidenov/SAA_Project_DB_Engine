@@ -36,9 +36,8 @@ fun Int.toLengthAvroByteSize(): Int {
     }
 }
 
-
 fun String.safeCapitalize(): String {
-    return this.replaceFirstChar {
+    return replaceFirstChar {
         if (it.isLowerCase()) it.titlecase(
             Locale.ROOT
         ) else it.toString()

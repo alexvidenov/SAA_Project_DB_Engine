@@ -1,5 +1,6 @@
 package com.example.saa_project_db_engine.serialization
 
+import com.example.saa_project_db_engine.KeyCompare
 import com.example.saa_project_db_engine.toByteArray
 import com.example.saa_project_db_engine.toByteBuffer
 import org.apache.avro.Schema
@@ -7,9 +8,13 @@ import org.apache.avro.generic.*
 import org.apache.avro.io.*
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.security.Key
 
 open class GenericRecord(sch: Schema) : GenericData.Record(sch) {
     private var io: IO = IO(sch)
+
+    val keyCompare: KeyCompare
+        get() = io::compare
 
     fun load(byteBuffer: ByteBuffer) {
         io.decode(this, byteBuffer)

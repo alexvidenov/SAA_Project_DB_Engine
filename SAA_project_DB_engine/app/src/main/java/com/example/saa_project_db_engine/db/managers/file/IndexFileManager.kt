@@ -4,11 +4,11 @@ import android.util.Log
 import com.example.saa_project_db_engine.db.indexing.models.IndexLogicalPage
 import com.example.saa_project_db_engine.db.indexing.models.IndexPageData
 import com.example.saa_project_db_engine.db.indexing.models.KeyValue
-import com.example.saa_project_db_engine.db.indexing.models.NodeType
+import com.example.saa_project_db_engine.db.indexing.models.nodes.NodeType
 import com.example.saa_project_db_engine.db.managers.file.models.PageMetadata
 import java.io.File
 
-class IndexFileManager private constructor(
+class IndexFileManager constructor(
     file: File,
     metadata: PageMetadata? = null
 ) : FileManager<KeyValue, IndexPageData, IndexLogicalPage>(file, metadata) {

@@ -18,12 +18,6 @@ class MainActivity : AppCompatActivity() {
 
         testCreate()
 
-//        val testSchema = GenericRecord(Schema.Parser().parse(File(filesDir, "TestSchema.avsc")))
-//
-//        testSchema.put("email", "testEmail")
-//        testSchema.put("password", "testPassword")
-//
-//        val testSchema2 = GenericRecord(Schema.Parser().parse(File(filesDir, "TestSchema.avsc")))
 //
 //        testSchema2.put("email", "testEmail2")
 //        testSchema2.put("password", "testPassword2")
@@ -46,9 +40,7 @@ class MainActivity : AppCompatActivity() {
 //
 ////        val decode =
 ////            com.example.saa_project_db_engine.db.storage.models.HeapPageData.fromBytes(bytes)
-//
-////        val testSchema3 = GenericRecord(Schema.Parser().parse(File(filesDir, "TestSchema.avsc")))
-////
+        // //
 ////        decode.records.forEach {
 ////            Log.d("TESTRECORD", "${it.value}")
 ////            testSchema3.load(it.value as ByteBuffer)
@@ -61,8 +53,7 @@ class MainActivity : AppCompatActivity() {
 //
 //
 //        val file = File(filesDir, "test.db")
-//        val schemaFile = File(filesDir, "TestSchema.avsc")
-//
+    //
 //        val fileManager = HeapFileManager.new(file)
 //        val pageManager = HeapPageManager(fileManager)
 //
@@ -104,14 +95,23 @@ class MainActivity : AppCompatActivity() {
         val executor = SchemaExecutor(this)
 
 //        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
-
+//
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
 //
-//        executor.execute("Select Id, Name, BirthDate FROM Sample")
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'IVAN')")
 
-        val parser = StatementParser()
-        val query =
-            parser.parseQuery("Select Name, DateBirth FROM Sample WHERE (Id == '5' OR DateBirth > '01.01.2000') AND (NOT Id == '6')")
-        Log.d("TEST", "QUERY: $query")
+        executor.execute("Select Name, BirthDate FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '1'")
+
+        //                         // Select Name, DateBirth FROM Sample WHERE (Id == '6' OR Id == '6') AND (Id == '7' OR Id == '7') OR (Id == '8' OR Id == '8')
+//        val parser = StatementParser()
+//        val query =
+//            parser.parseQuery(
+//                "Select Name, DateBirth FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '2'"
+//            )
+//        Log.d(
+//            "TEST", "QUERY: $query"
+//        )
     }
 }

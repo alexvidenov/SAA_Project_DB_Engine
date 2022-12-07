@@ -10,10 +10,13 @@ import com.example.saa_project_db_engine.db.storage.models.TableRow
 class HeapPageManager constructor(override val fileManager: HeapFileManager) :
     PageManager<TableRow, HeapPageData, HeapLogicalPage>(fileManager) {
 
-    fun allocate(initialRecords: MutableList<TableRow>): HeapLogicalPage {
-        val page = fileManager.allocateNewHeapLogicalPage(initialRecords)
-        pool[page.id] = page
-        return page
+    override fun allocateNewLogicalPage(
+        page: HeapLogicalPage,
+        records: MutableList<TableRow>
+    ): HeapLogicalPage {
+        val allocated = fileManager.allocateNewHeapLogicalPage(records)
+        pool[allocated.id] = allocated
+        return allocated
     }
 
     fun insertRow(row: TableRow) {
