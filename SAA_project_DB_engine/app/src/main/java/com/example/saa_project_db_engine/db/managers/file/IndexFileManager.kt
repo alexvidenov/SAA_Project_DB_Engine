@@ -34,6 +34,7 @@ class IndexFileManager constructor(
         nextLogicalPageId = freePage?.nextId ?: (freePageId + 1)
         nextRowId += initialRecords.size
         writeMetadata()
+        Log.d("TEST", "NEW LOGICAL PAGE: ${freePageId} ${nodeType} ${initialRecords}")
         return IndexLogicalPage.new(freePageId, nodeType, initialRecords)
     }
 

@@ -33,6 +33,26 @@
           ]
         }
       }
+    },
+    {
+      "name": "offsetArray",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "RowOffsetArrayEntry",
+          "fields": [
+            {
+              "name": "rowId",
+              "type": "int"
+            },
+            {
+              "name": "index",
+              "type": "int"
+            }
+          ]
+        }
+      }
     }
   ]
 }

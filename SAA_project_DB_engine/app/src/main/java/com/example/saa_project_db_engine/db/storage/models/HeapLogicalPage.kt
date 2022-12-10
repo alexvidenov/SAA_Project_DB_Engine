@@ -22,9 +22,23 @@ class HeapLogicalPage private constructor(
         }
 
         private fun createHeapLogicalPageData(id: Int, init: MutableList<TableRow>): HeapPageData {
-            return HeapPageData(id, -1, -1, init)
+            val rowOffsetArray = mutableListOf<RowOffsetArrayEntry>()
+            init.forEachIndexed { index, row ->
+                rowOffsetArray.add(RowOffsetArrayEntry(row.rowId!!, index))
+            }
+            return HeapPageData(id, -1, -1, init, rowOffsetArray)
         }
+    }
 
+    fun addRowToRowOffsetArray(rowId: Int, index: Int) {
+        val entry = RowOffsetArrayEntry(rowId, index)
+        data.rowOffsetArray.add(entry)
+    }
+
+    fun getIndexForRowId(rowId: Int): Int? {
+        return data.rowOffsetArray.find {
+            it.rowId == rowId
+        }?.index
     }
 
     override val overheadSize: Int

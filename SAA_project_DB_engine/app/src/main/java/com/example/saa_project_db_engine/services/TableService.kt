@@ -2,25 +2,29 @@ package com.example.saa_project_db_engine.services
 
 import android.content.Context
 import android.util.Log
-import androidx.constraintlayout.motion.widget.KeyTimeCycle
 import com.example.saa_project_db_engine.KeyCompare
 import com.example.saa_project_db_engine.ROOT_PAGE_ID
 import com.example.saa_project_db_engine.db.indexing.models.BPlusTree
+import com.example.saa_project_db_engine.db.indexing.models.IndexValue
+import com.example.saa_project_db_engine.db.indexing.models.KeyValue
+import com.example.saa_project_db_engine.db.indexing.models.Record
 import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.managers.file.IndexFileManager
 import com.example.saa_project_db_engine.db.managers.page.HeapPageManager
 import com.example.saa_project_db_engine.db.managers.page.IndexPageManager
+import com.example.saa_project_db_engine.db.managers.page.forEachRowPageIndexed
 import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.parsers.models.*
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import org.apache.avro.Schema
 import java.io.File
+import java.nio.ByteBuffer
 
 data class TableManagerData(
     val heapPageManager: HeapPageManager,
-    val indexes: MutableList<BPlusTree>,
-    val schema: Schema
+    val schema: Schema,
+    var indexes: Map<String, BPlusTree> = mapOf()
 )
 
 class TableService constructor(ctx: Context) {
@@ -43,19 +47,81 @@ class TableService constructor(ctx: Context) {
         val pageManager = HeapPageManager(heapManager)
 
         managerPool[tableName] =
-            TableManagerData(pageManager, mutableListOf(), Schema.Parser().parse(schemaFile))
+            TableManagerData(pageManager, Schema.Parser().parse(schemaFile), mapOf())
     }
 
-    fun createIndex(tableName: String, fieldName: String) {
-        val indexFile = File(dir, "${tableName}_index_$fieldName.index")
-        val schemaFile = File(dir, "${tableName}_index_${fieldName}_schema.avsc")
-        val schema = Schema.Parser().parse(schemaFile)
-        val type = schema.fields.find { it.name() == fieldName }?.schema()?.type
+    fun createIndex(tableName: String, indexName: String, fieldName: String) {
+        load(tableName)
+        val data = managerPool[tableName]!!
+
+        val indexFile = File(dir, "${tableName}_index_${indexName}_$fieldName.index")
+        val fieldSchemaFile = File(dir, "${tableName}_index_${indexName}_${fieldName}_schema.avsc")
+
+        val tableSchema = data.schema
+
+        val fieldType =
+            tableSchema.fields.find { it.name() == fieldName }?.schema()?.type?.getName()
         indexFile.createNewFile()
-        schemaFile.createNewFile()
-        val builder = StringBuilder()
-        val text = ""
-        schemaFile.writeText(text)
+        fieldSchemaFile.createNewFile()
+        
+        var builder = StringBuilder()
+            .append("{")
+            .append("\"name\":")
+            .append("\"${tableName}\"")
+            .append(",")
+            .append("\"type\": \"record\"")
+            .append(",")
+            .append("\"fields\": [")
+        builder = builder
+            .append("{\"name\":")
+            .append("\"${fieldName}\",")
+            .append("\"type\": \"${fieldType}\",")
+            .append("\"order\":")
+            .append("\"ascending\"")
+            .append("}")
+            .append("]}")
+        fieldSchemaFile.writeText(builder.toString())
+
+        val fieldSchema = Schema.Parser().parse(fieldSchemaFile)
+
+        val indexFieldSchema = Schema.Parser().parse(fieldSchemaFile)
+        var indexFieldRecord = GenericRecord(fieldSchema)
+        val keyCompare = indexFieldRecord.keyCompare
+
+        val indexFileManager = IndexFileManager.new(indexFile)
+        val indexPageManager = IndexPageManager(indexFileManager)
+
+        val tree = BPlusTree(indexPageManager, keyCompare)
+
+        data.heapPageManager.forEachRowPageIndexed { row, pageId ->
+            val tableRecord = GenericRecord(tableSchema)
+            tableRecord.load(row.value)
+            val key = tableRecord.get(fieldName)
+
+            indexFieldRecord = GenericRecord(indexFieldSchema)
+            indexFieldRecord.put(fieldName, key)
+
+            val indexValue = IndexValue(pageId, row.rowId!!)
+
+            Log.d("TEST", "ADDING KEYVALUE: $indexValue")
+            val keyValue =
+                KeyValue(
+                    indexFieldRecord.toByteBuffer(),
+                    indexValue.toBytes()
+                )
+            tree.put(Record(keyValue))
+        }
+
+        indexFieldRecord = GenericRecord(indexFieldSchema)
+        indexFieldRecord.put(fieldName, 3)
+
+        val record = Record(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
+        val res = tree.get(record)
+        val value = res?.value
+
+        val testRes = IndexValue.fromBytes(value!!)
+
+        Log.d("TEST", "res: $testRes")
     }
 
     private fun loadTable(tableName: String) {
@@ -64,19 +130,33 @@ class TableService constructor(ctx: Context) {
             val schemaFile = File(dir, "$tableName.avsc")
             val fileManager = HeapFileManager.load(file)
             val heapPageManager = HeapPageManager(fileManager)
-            val indexManagers = initIndexManagersForTable(tableName)
             managerPool[tableName] =
-                TableManagerData(heapPageManager, indexManagers, Schema.Parser().parse(schemaFile))
+                TableManagerData(heapPageManager, Schema.Parser().parse(schemaFile), mutableMapOf())
         }
     }
 
+    // guaranteed to be called after loadTable
+    private fun loadIndex(tableName: String) {
+        val indexManagers =
+            initIndexManagersForTable(tableName)
+        val data = managerPool[tableName]
+        data!!.indexes = indexManagers
+        managerPool[tableName] = data
+    }
+
+    private fun load(tableName: String) {
+        loadTable(tableName)
+        loadIndex(tableName)
+    }
+
+    // sample_index_birthdate_schema.avsc
     // tableName.db
     // tableName_index_name.index
     // tableName_index_name_schema.avsc
-    private fun initIndexManagersForTable(tableName: String): MutableList<BPlusTree> {
-        val indexes = mutableListOf<IndexPageManager>()
-        val compares = mutableListOf<KeyCompare>()
-        val managers = mutableListOf<BPlusTree>()
+    private fun initIndexManagersForTable(tableName: String): Map<String, BPlusTree> {
+        val indexes = mutableMapOf<String, IndexPageManager>()
+        val compares = mutableMapOf<String, KeyCompare>()
+        val managers = mutableMapOf<String, BPlusTree>()
         files.filter {
             it.startsWith("${tableName}_index")
         }.forEach {
@@ -85,16 +165,20 @@ class TableService constructor(ctx: Context) {
             if (file.extension == "index") {
                 val fileManager = IndexFileManager(File(dir, it))
                 val indexPageManager = IndexPageManager(fileManager)
-                indexes.add(indexPageManager)
+                val indexFieldName =
+                    file.name.substringBeforeLast(".").split("_").last() // should be last - 1
+                indexes[indexFieldName] = indexPageManager
             } else if (file.extension == "avsc") {
                 val schema = Schema.Parser().parse(file)
                 val record = GenericRecord(schema)
-                compares.add(record.keyCompare)
+                val indexFieldName = file.name.substringBeforeLast(".").split("_").last()
+                compares[indexFieldName] = record.keyCompare
             }
         }
-        indexes.forEachIndexed { index, manager ->
-            val compare = compares[index]
-            managers.add(BPlusTree(manager, compare))
+        indexes.entries.forEach {
+            val key = it.key
+            val compare = compares[key]
+            managers[key] = BPlusTree(it.value, compare!!)
         }
         return managers
     }
@@ -103,7 +187,7 @@ class TableService constructor(ctx: Context) {
         tableName: String, fields: MutableList<String>,
         inserts: MutableList<MutableList<String>>
     ) {
-        loadTable(tableName)
+        load(tableName)
         val data = managerPool[tableName]!!
         val tableRows = mutableListOf<TableRow>()
         val schema = data.schema
@@ -159,7 +243,7 @@ class TableService constructor(ctx: Context) {
 
     }
 
-    fun scan() {
+    fun fullTableScan() {
 
     }
 
@@ -168,7 +252,7 @@ class TableService constructor(ctx: Context) {
         fields: List<String>,
         conditions: List<WhereClauseType.LogicalOperation>
     ): SelectResultModel {
-        loadTable(tableName)
+        load(tableName)
         val data = managerPool[tableName]!!
 
         var curPageId = ROOT_PAGE_ID

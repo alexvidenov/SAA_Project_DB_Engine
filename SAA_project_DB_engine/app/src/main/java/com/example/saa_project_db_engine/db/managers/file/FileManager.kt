@@ -13,9 +13,9 @@ import java.io.File
 import java.lang.Exception
 import java.nio.ByteBuffer
 
-abstract class FileManager<R : WithByteUtils, D : PageData<R>, T : LogicalPage<R, D>>protected constructor(
+abstract class FileManager<R : WithByteUtils, D : PageData<R>, T : LogicalPage<R, D>> protected constructor(
     file: File,
-    initialMetadata: PageMetadata? = null
+    initialMetadata: PageMetadata? = null,
 ) {
 
     companion object {

@@ -1,11 +1,12 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
+import android.util.Log
 import com.example.saa_project_db_engine.db.base.LogicalPage
 import com.example.saa_project_db_engine.db.indexing.models.nodes.NodeType
 import java.nio.ByteBuffer
 
 class IndexLogicalPage private constructor(
-    val data: IndexPageData
+    data: IndexPageData
 ) : LogicalPage<KeyValue, IndexPageData>(data) {
 
     companion object {
@@ -20,7 +21,9 @@ class IndexLogicalPage private constructor(
             nodeType: NodeType,
             initialRecords: MutableList<KeyValue>
         ): IndexLogicalPage {
+            Log.d("TEST", "INDEX DATA INIT")
             val data = createIndexLogicalPageData(id, nodeType, initialRecords)
+            Log.d("TEST", "INDEX DATA IS ${data}")
             return IndexLogicalPage(data)
         }
 

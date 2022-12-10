@@ -1,11 +1,10 @@
 {
-  "name": "TableRow",
+  "name": "KeyValue",
   "type": "record",
   "fields": [
     {
-      "order": "ascending",
-      "name": "rowId",
-      "type": "int"
+      "name": "key",
+      "type": "bytes"
     },
     {
       "name": "value",

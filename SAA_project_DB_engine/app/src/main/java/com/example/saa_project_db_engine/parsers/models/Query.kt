@@ -90,6 +90,7 @@ data class FieldSchemaDefinition(
 
 data class Query(
     var type: QueryType = QueryType.Undefined,
+    var indexName: String = "",
     var table: String = "",
     var updates: MutableMap<String, String> = mutableMapOf(),
     var inserts: MutableList<MutableList<String>> = mutableListOf(),

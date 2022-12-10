@@ -24,8 +24,11 @@ data class IndexPageData(
             val id = record.get("id") as Int
             val previousPageId = record.get("previousPageId") as Int
             val nextPageId = record.get("nextPageId") as Int
-            val nodeTypeString = record.get("nodeType") as String
-            val nodeType = NodeType.fromString(nodeTypeString)
+            var nodeTypeString = record.get("nodeType")
+            if (nodeTypeString is org.apache.avro.util.Utf8) { // guaranteed
+                nodeTypeString = nodeTypeString.toString()
+            }
+            val nodeType = NodeType.fromString(nodeTypeString as String)
             val records = record.get("records") as MutableList<*>
             val mapped = records.map {
                 val indexedRecord = it as IndexedRecord

@@ -11,6 +11,12 @@ enum class ParseStateStep {
     CreateTableColon,
     CreateTableFieldType,
     CreateTableFieldCommaOrClosingParentheses,
+    CreateIndexName,
+    CreateIndexOnWord,
+    CreateIndexTableName,
+    CreateIndexOpeningParenthesis,
+    CreateIndexFieldName,
+    CreateIndexClosingParenthesis,
     DropTableName,
     SelectField,
     SelectFrom,
@@ -55,6 +61,11 @@ class StatementParser {
                             state.query.type = QueryType.CreateTable
                             state.pop()
                             state.step = ParseStateStep.CreateTableName
+                        }
+                        "CreateIndex" -> {
+                            state.query.type = QueryType.CreateIndex
+                            state.pop()
+                            state.step = ParseStateStep.CreateIndexName
                         }
                         "DropTable" -> {
                             state.query.type = QueryType.DropTable
@@ -424,6 +435,46 @@ class StatementParser {
                     val table = state.peek()
                     state.pop()
                     state.query.table = table
+                }
+                ParseStateStep.CreateIndexName -> {
+                    val indexName = state.peek()
+                    state.pop()
+                    state.query.indexName = indexName
+                    state.step = ParseStateStep.CreateIndexOnWord
+                }
+                ParseStateStep.CreateIndexOnWord -> {
+                    val onWord = state.peek()
+                    if (onWord != "ON") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.CreateIndexTableName
+                }
+                ParseStateStep.CreateIndexTableName -> {
+                    val tableName = state.peek()
+                    state.pop()
+                    state.query.table = tableName
+                    state.step = ParseStateStep.CreateIndexOpeningParenthesis
+                }
+                ParseStateStep.CreateIndexOpeningParenthesis -> {
+                    val opening = state.peek()
+                    if (opening != "(") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.CreateIndexFieldName
+                }
+                ParseStateStep.CreateIndexFieldName -> {
+                    val fieldName = state.peek()
+                    state.query.fields.add(fieldName)
+                    state.step = ParseStateStep.CreateIndexClosingParenthesis
+                }
+                ParseStateStep.CreateIndexClosingParenthesis -> {
+                    val closing = state.peek()
+                    if (closing != ")") {
+
+                    }
+                    state.pop()
                 }
             }
         }

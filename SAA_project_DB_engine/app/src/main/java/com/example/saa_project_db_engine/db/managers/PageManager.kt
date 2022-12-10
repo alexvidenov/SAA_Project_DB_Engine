@@ -2,6 +2,7 @@ package com.example.saa_project_db_engine.db.managers
 
 import com.example.saa_project_db_engine.MAX_PAGE_SIZE
 import com.example.saa_project_db_engine.ROOT_PAGE_ID
+import com.example.saa_project_db_engine.db.NullPersistenceModelException
 import com.example.saa_project_db_engine.db.base.PageData
 import com.example.saa_project_db_engine.db.managers.file.FileManager
 import com.example.saa_project_db_engine.db.base.WithByteUtils
@@ -15,7 +16,7 @@ abstract class PageManager<B : WithByteUtils, D : PageData<B>, P : LogicalPage<B
         return if (pool.contains(id)) {
             pool[id]
         } else {
-            val page = fileManager.readModel(id) ?: throw java.lang.Exception()
+            val page = fileManager.readModel(id) ?: throw NullPersistenceModelException("")
             pool[id] = page
             page
         }

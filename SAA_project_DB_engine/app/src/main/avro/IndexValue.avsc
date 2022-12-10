@@ -1,0 +1,15 @@
+{
+  "name": "IndexValue",
+  "type": "record",
+  "fields": [
+    {
+      "name": "pageId",
+      "type": "int",
+      "order": "ascending"
+    },
+    {
+      "name": "rowId",
+      "type": "int"
+    }
+  ]
+}

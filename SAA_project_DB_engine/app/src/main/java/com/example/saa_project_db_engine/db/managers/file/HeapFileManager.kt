@@ -29,11 +29,7 @@ class HeapFileManager private constructor(
     ): HeapLogicalPage {
         val freePageId = nextLogicalPageId
         val freePage = readModel(freePageId)
-        nextLogicalPageId = if (freePage == null) {
-            freePageId + 1
-        } else {
-            freePage.nextId
-        }
+        nextLogicalPageId = freePage?.nextId ?: (freePageId + 1)
         nextRowId += initialRecords.size
         writeMetadata()
         return HeapLogicalPage.new(freePageId, initialRecords)

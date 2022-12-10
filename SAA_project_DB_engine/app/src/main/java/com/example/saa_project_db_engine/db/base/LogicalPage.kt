@@ -1,11 +1,12 @@
 package com.example.saa_project_db_engine.db.base
 
+import android.util.Log
 import com.example.saa_project_db_engine.MAX_PAGE_SIZE
 import com.example.saa_project_db_engine.db.PageFullException
 import com.example.saa_project_db_engine.toLengthAvroByteSize
 import java.nio.ByteBuffer
 
-abstract class LogicalPage<T : WithByteUtils, D : PageData<T>> protected constructor(private val data: D) {
+abstract class LogicalPage<T : WithByteUtils, D : PageData<T>> protected constructor(val data: D) {
 
     abstract val overheadSize: Int
 
@@ -33,16 +34,16 @@ abstract class LogicalPage<T : WithByteUtils, D : PageData<T>> protected constru
 
     val size: Int get() = byteSize
 
-    // TODO: index?
-    fun insert(page: T, index: Int? = null) {
+    fun insert(page: T, index: Int? = null): Int {
         val newByteSize = calcPageSize(page.toAvroBytesSize(), 1)
         if (index != null) {
-            records[index] = page
+            records.add(index, page)
         } else {
             records.add(page)
         }
         byteSize = newByteSize
         if (newByteSize > MAX_PAGE_SIZE) throw PageFullException("")
+        return records.size - 1
     }
 
     fun update(index: Int, newKeyValue: T) {
@@ -57,7 +58,7 @@ abstract class LogicalPage<T : WithByteUtils, D : PageData<T>> protected constru
     fun delete(index: Int, old: T? = null): T {
         val keyValue = records[index]
         val newByteSize = calcPageSize(-keyValue.toAvroBytesSize(), -1)
-        records[index] = old?.empty() as T // I checked it, don't listen to the linter
+        records[index] = old?.empty() as T // I am the one who checks, don't listen to the linter
 //        data.records.removeAt(index)
         byteSize = newByteSize
         return keyValue

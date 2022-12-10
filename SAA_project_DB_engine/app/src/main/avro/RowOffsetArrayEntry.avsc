@@ -1,15 +1,14 @@
 {
-  "name": "TableRow",
+  "name": "RowOffsetArrayEntry",
   "type": "record",
   "fields": [
     {
-      "order": "ascending",
       "name": "rowId",
       "type": "int"
     },
     {
-      "name": "value",
-      "type": "bytes"
+      "name": "index",
+      "type": "int"
     }
   ]
 }

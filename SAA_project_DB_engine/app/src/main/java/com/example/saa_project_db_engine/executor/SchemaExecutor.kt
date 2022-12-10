@@ -41,7 +41,9 @@ class SchemaExecutor constructor(private val ctx: Context) {
             }
             QueryType.Update -> TODO()
             QueryType.Delete -> TODO()
-            QueryType.CreateIndex -> TODO()
+            QueryType.CreateIndex -> {
+                tableService.createIndex(query.table, query.indexName, query.fields.first())
+            }
             QueryType.DropIndex -> TODO()
         }
     }
@@ -94,7 +96,4 @@ class SchemaExecutor constructor(private val ctx: Context) {
         tableService.select(tableName, fields, conditions)
     }
 
-    fun test() {
-        tableService.test()
-    }
 }
