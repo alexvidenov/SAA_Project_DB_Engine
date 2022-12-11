@@ -17,15 +17,12 @@ import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.parsers.models.*
 import com.example.saa_project_db_engine.serialization.GenericRecord
+import com.example.saa_project_db_engine.services.models.IndexData
+import com.example.saa_project_db_engine.services.models.TableManagerData
 import org.apache.avro.Schema
 import java.io.File
 import java.nio.ByteBuffer
 
-data class TableManagerData(
-    val heapPageManager: HeapPageManager,
-    val schema: Schema,
-    var indexes: Map<String, BPlusTree> = mapOf()
-)
 
 class TableService constructor(ctx: Context) {
     private val dir = ctx.filesDir
@@ -57,13 +54,13 @@ class TableService constructor(ctx: Context) {
         val indexFile = File(dir, "${tableName}_index_${indexName}_$fieldName.index")
         val fieldSchemaFile = File(dir, "${tableName}_index_${indexName}_${fieldName}_schema.avsc")
 
-        val tableSchema = data.schema
+        val tableSchema = data.tableSchema
 
         val fieldType =
             tableSchema.fields.find { it.name() == fieldName }?.schema()?.type?.getName()
         indexFile.createNewFile()
         fieldSchemaFile.createNewFile()
-        
+
         var builder = StringBuilder()
             .append("{")
             .append("\"name\":")
@@ -113,15 +110,29 @@ class TableService constructor(ctx: Context) {
         }
 
         indexFieldRecord = GenericRecord(indexFieldSchema)
-        indexFieldRecord.put(fieldName, 3)
+        indexFieldRecord.put(fieldName, "PETKAN") // all records with Ivan as the index key
 
         val record = Record(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
         val res = tree.get(record)
-        val value = res?.value
 
-        val testRes = IndexValue.fromBytes(value!!)
+        res!!.forEach {
+            val testRes = IndexValue.fromBytes(it.value)
 
-        Log.d("TEST", "res: $testRes")
+            Log.d("TEST", "res: $testRes")
+        }
+
+//
+//        val records = tree.scan(indexFieldRecord.toByteBuffer())
+//        records.forEach {
+//            val testRes = IndexValue.fromBytes(it.value)
+//
+//            Log.d("TEST", "res: $testRes")
+//        }
+//        val value = res?.value
+//
+//        val testRes = IndexValue.fromBytes(value!!)
+//
+//        Log.d("TEST", "res: $testRes")
     }
 
     private fun loadTable(tableName: String) {
@@ -153,10 +164,11 @@ class TableService constructor(ctx: Context) {
     // tableName.db
     // tableName_index_name.index
     // tableName_index_name_schema.avsc
-    private fun initIndexManagersForTable(tableName: String): Map<String, BPlusTree> {
+    private fun initIndexManagersForTable(tableName: String): Map<String, IndexData> {
         val indexes = mutableMapOf<String, IndexPageManager>()
         val compares = mutableMapOf<String, KeyCompare>()
-        val managers = mutableMapOf<String, BPlusTree>()
+        val schemas = mutableMapOf<String, Schema>()
+        val managers = mutableMapOf<String, IndexData>()
         files.filter {
             it.startsWith("${tableName}_index")
         }.forEach {
@@ -173,12 +185,14 @@ class TableService constructor(ctx: Context) {
                 val record = GenericRecord(schema)
                 val indexFieldName = file.name.substringBeforeLast(".").split("_").last()
                 compares[indexFieldName] = record.keyCompare
+                schemas[indexFieldName] = schema
             }
         }
         indexes.entries.forEach {
             val key = it.key
             val compare = compares[key]
-            managers[key] = BPlusTree(it.value, compare!!)
+            val schema = schemas[key]
+            managers[key] = IndexData(schema!!, BPlusTree(it.value, compare!!))
         }
         return managers
     }
@@ -190,13 +204,13 @@ class TableService constructor(ctx: Context) {
         load(tableName)
         val data = managerPool[tableName]!!
         val tableRows = mutableListOf<TableRow>()
-        val schema = data.schema
+        val schema = data.tableSchema
         val omittedFields = schema.fields.filter {
             !fields.contains(it.name())
         }
         inserts.removeAt(0) // first item it always empty due to way of parsing
         inserts.forEach {
-            val record = GenericRecord(data.schema)
+            val record = GenericRecord(data.tableSchema)
             fields.forEachIndexed { index, s ->
                 val field = schema.fields.find {
                     it.name() == s
@@ -239,8 +253,70 @@ class TableService constructor(ctx: Context) {
         }
     }
 
-    fun indexScan() {
+    /*
+    for the sake of simplicity, I won't write a goddamn query analyser to optimise usage of  indexes in complex
+    queries with subexpressions. Way the fuck out of scope. Next time delve into the topic when you create assignments.
 
+    AND -> return only the rows that exist in both index scan sets
+    OR -> just merge the two record sets from index scan
+     */
+    // WHERE Id > 4 && Id < 6
+    fun indexScan(tableName: String, op: WhereClauseType.LogicalOperation) {
+        val data = managerPool[tableName]!!
+        when (op.operator) {
+            LogicalOperator.AND -> {
+                val leftCond = op.leftNode
+                val rightCond = op.rightNode
+                val leftOperand1 = leftCond!!.operand1
+                val rightOperand2 = rightCond!!.operand1
+                if (leftOperand1 == rightOperand2) {
+                    val indexFieldData = data.indexes[leftOperand1]!!
+                    val record = GenericRecord(indexFieldData.indexSchema)
+                    val tree = indexFieldData.tree
+                    when (leftCond.operator) {
+                        Operator.Undefined -> TODO()
+                        Operator.Eq -> {
+//                            val record =
+//                            tree.get()
+                        }
+                        Operator.Ne -> TODO()
+                        Operator.Gt -> TODO()
+                        Operator.Lt -> TODO()
+                        Operator.Gte -> TODO()
+                        Operator.Lte -> TODO()
+                    }
+                } else {
+
+                }
+            }
+            LogicalOperator.OR -> {
+//                val indexScanLeftNodeRes =
+//                val indexScanRightodeRes
+            }
+            LogicalOperator.NOT -> {
+
+            }
+            else -> {}
+        }
+    }
+
+    fun applyIndexCondition(condition: WhereClauseType.Condition) {
+        val data = managerPool[condition.operand1]!!
+        val record =
+            GenericRecord(data.indexes[condition.operand1]!!.indexSchema) // think if this is correct
+        when (condition.operator) {
+            Operator.Eq -> {
+
+            }
+            Operator.Ne -> {
+
+            }
+            Operator.Gt -> TODO()
+            Operator.Lt -> TODO()
+            Operator.Gte -> TODO()
+            Operator.Lte -> TODO()
+            Operator.Undefined -> {}
+        }
     }
 
     fun fullTableScan() {
@@ -255,6 +331,12 @@ class TableService constructor(ctx: Context) {
         load(tableName)
         val data = managerPool[tableName]!!
 
+        if (checkForPossibleIndexScan(fields, tableName) && conditions.size == 1) {
+            indexScan(tableName, conditions.first())
+        } else {
+            fullTableScan()
+        }
+
         var curPageId = ROOT_PAGE_ID
 
         val values: MutableList<MutableList<String>> = mutableListOf()
@@ -267,7 +349,7 @@ class TableService constructor(ctx: Context) {
 
                 page.records.forEach {
                     Log.d("TEST", "PAGE")
-                    val record = GenericRecord(data.schema)
+                    val record = GenericRecord(data.tableSchema)
 
                     Log.d("TEST", "${it.value} ${it.rowId}")
                     record.load(it.value)
@@ -297,6 +379,14 @@ class TableService constructor(ctx: Context) {
         Log.d("TEST", "SELECT RESULT MODEL: $model")
 
         return model
+    }
+
+    private fun checkForPossibleIndexScan(fields: List<String>, tableName: String): Boolean {
+        val data = managerPool[tableName]!!
+        fields.forEach {
+            data.indexes[it] ?: return false
+        }
+        return true
     }
 
     // (Id == '6' OR Date == '22'') AND Date >= '23

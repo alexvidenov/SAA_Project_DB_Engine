@@ -1,7 +1,6 @@
 package com.example.saa_project_db_engine.db.indexing.models.nodes
 
 import com.example.saa_project_db_engine.KeyCompare
-import com.example.saa_project_db_engine.MergeRule
 import com.example.saa_project_db_engine.db.indexing.models.BPlusTree
 import com.example.saa_project_db_engine.db.indexing.models.IndexLogicalPage
 import com.example.saa_project_db_engine.db.indexing.models.KeyValue
@@ -48,28 +47,39 @@ abstract class Node constructor(
     fun isInternalNode(): Boolean = type == NodeType.InternalNode
     fun isRootNode(): Boolean = type == NodeType.RootNode
 
-    fun get(key: ByteBuffer): Record? {
+    fun get(key: ByteBuffer): List<Record>? {
         return when (val result = find(key)) {
-            is FindResult.ExactMatch -> Record(key, result.value.value)
+            is FindResult.ExactMatches -> {
+                result.indexValueMap.map {
+                    val entry = it.value
+                    Record(entry.key, entry.value)
+                }
+            }
             else -> null
         }
     }
 
-    fun put(key: ByteBuffer, value: ByteBuffer, merge: MergeRule? = null) {
+    fun put(key: ByteBuffer, value: ByteBuffer) {
         when (val result = find(key)) {
-            is FindResult.ExactMatch -> {
-                val newValue = merge?.invoke(value, result.value.value) ?: value
-                page.update(result.index, KeyValue(key, newValue))
+            is FindResult.ExactMatches -> {
+                page.insert(
+                    KeyValue(key, value)
+//                    result.indexValueMap.entries.last().key
+                ) // TODO: + 1?
+//                page.update(result.index, KeyValue(key, value))
             }
             is FindResult.FirstGreaterThanMatch -> page.insert(KeyValue(key, value), result.index)
             null -> page.insert(KeyValue(key, value), 0)
+            else -> {}
         }
     }
 
     fun delete(key: ByteBuffer) {
         val result = find(key)
-        if (result is FindResult.ExactMatch) {
-            page.delete(result.index, result.value)
+        if (result is FindResult.ExactMatches) {
+            result.indexValueMap.entries.forEach {
+                page.delete(it.key, it.value)
+            }
         }
     }
 
@@ -112,21 +122,34 @@ abstract class Node constructor(
     }
 
     protected sealed class FindResult {
-        data class ExactMatch(val index: Int, val value: KeyValue) : FindResult()
+        data class ExactMatches(val indexValueMap: Map<Int, KeyValue>) : FindResult()
         data class FirstGreaterThanMatch(val index: Int) : FindResult()
     }
 
     protected fun find(keyByteBuffer: ByteBuffer): FindResult? {
         if (page.records.isEmpty()) return null
         val keyBytes = keyByteBuffer.toByteArray()
+        val matches = mutableMapOf<Int, KeyValue>()
         for ((index, keyValue) in page.records.withIndex()) {
             val key = keyValue.key
             if (key == BPlusTree.logicalMinimumKey) continue
-            val compared = compare(key.toByteArray(), keyBytes)
+            val compared = compare(
+                key.toByteArray(),
+                keyBytes
+            ) // compares only the search term, the pageId + rowId is obviously not compared
             when {
-                compared == 0 -> return FindResult.ExactMatch(index, keyValue)
-                compared > 0 -> return FindResult.FirstGreaterThanMatch(index)
+                compared == 0 -> {
+                    matches[index] = keyValue
+                }
+                compared > 0 -> {
+                    if (matches.isEmpty()) {
+                        return FindResult.FirstGreaterThanMatch(index)
+                    }
+                }
             }
+        }
+        if (matches.isNotEmpty()) {
+            return FindResult.ExactMatches(matches)
         }
         return FindResult.FirstGreaterThanMatch(recordsSize)
     }

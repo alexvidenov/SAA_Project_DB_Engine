@@ -18,7 +18,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
     private val rootNode: RootNode = RootNode(pageManager.getRootPage(), keyCompare)
     private fun compare(a: ByteBuffer, b: ByteBuffer) = keyCompare(a.toByteArray(), b.toByteArray())
 
-    fun get(key: ByteBuffer): Record? {
+    fun get(key: ByteBuffer): List<Record>? {
         val result = findLeafNode(key)
         return result.leafNode.get(key)
     }
@@ -154,7 +154,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
                 InternalNode(leftPage, keyCompare),
                 InternalNode(rightPage, keyCompare)
             )
-            else -> throw Exception() // TODO
+            else -> throw Exception()
         }
         rootNode.addChildNode(leftNode, logicalMinimumKey)
         rootNode.addChildNode(rightNode)

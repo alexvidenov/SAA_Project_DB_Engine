@@ -32,9 +32,9 @@ open class InternalNode constructor(page: IndexLogicalPage, keyCompare: KeyCompa
 
     fun findChildPageId(key: ByteBuffer): Int {
         return when (val result = find(key)) {
-            is FindResult.ExactMatch -> decodeChildPageId(result.value.value)
+            is FindResult.ExactMatches -> decodeChildPageId(result.indexValueMap.values.last().value)
             is FindResult.FirstGreaterThanMatch -> {
-                if (result.index == 0 && previousId != -1) // was null. TODO?
+                if (result.index == 0 && previousId != -1)
                     throw Exception()
                 val index = if (result.index == 0) 0 else result.index - 1
                 decodeChildPageId(page.records[index].value)

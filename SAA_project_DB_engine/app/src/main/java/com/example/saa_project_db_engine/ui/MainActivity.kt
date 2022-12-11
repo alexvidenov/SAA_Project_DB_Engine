@@ -95,22 +95,28 @@ class MainActivity : AppCompatActivity() {
         val executor = SchemaExecutor(this)
 
 //        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
-//
+////
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
 //
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'PETKAN')")
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'DRAGAN')")
 
 //        executor.execute("Select Name, BirthDate FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '1'")
 
-        executor.execute("CreateIndex SampleId ON Sample (Id)")
+        executor.execute("CreateIndex SampleId ON Sample (Name)")
 
-        //                         // Select Name, DateBirth FROM Sample WHERE (Id == '6' OR Id == '6') AND (Id == '7' OR Id == '7') OR (Id == '8' OR Id == '8')
+        // Select Name, DateBirth FROM Sample WHERE (Id == '6' OR Id == '6') AND (Id == '7' OR Id == '7') OR (Id == '8' OR Id == '8')
 //        val parser = StatementParser()
 //        val query =
 //            parser.parseQuery(
-//                "CreateIndex SampleId ON Sample (Id)"
+//                "Select Name FROM Sample WHERE Name == 'PETKAN' OR Id == 6 AND Id > 7"
 //            )
 //        Log.d(
 //            "TEST", "QUERY: $query"

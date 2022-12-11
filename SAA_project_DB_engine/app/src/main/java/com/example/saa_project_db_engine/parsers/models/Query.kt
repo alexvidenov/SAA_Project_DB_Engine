@@ -1,7 +1,5 @@
 package com.example.saa_project_db_engine.parsers.models
 
-import android.drm.DrmStore.RightsStatus
-
 enum class QueryType {
     Undefined, CreateTable, DropTable, ListTables, TableInfo, CreateIndex, DropIndex, Insert, Select, Update, Delete
 }
