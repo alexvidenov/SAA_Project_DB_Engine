@@ -1,0 +1,26 @@
+{
+  "name": "IndexValues",
+  "type": "record",
+  "fields": [
+    {
+      "name": "records",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "IndexValue",
+          "fields": [
+            {
+              "name": "pageId",
+              "type": "int"
+            },
+            {
+              "name": "rowId",
+              "type": "int"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

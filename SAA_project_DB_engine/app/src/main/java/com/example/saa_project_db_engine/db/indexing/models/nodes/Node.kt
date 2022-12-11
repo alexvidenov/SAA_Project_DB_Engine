@@ -1,10 +1,9 @@
 package com.example.saa_project_db_engine.db.indexing.models.nodes
 
+import android.util.Log
 import com.example.saa_project_db_engine.KeyCompare
-import com.example.saa_project_db_engine.db.indexing.models.BPlusTree
-import com.example.saa_project_db_engine.db.indexing.models.IndexLogicalPage
-import com.example.saa_project_db_engine.db.indexing.models.KeyValue
-import com.example.saa_project_db_engine.db.indexing.models.Record
+import com.example.saa_project_db_engine.MergeRule
+import com.example.saa_project_db_engine.db.indexing.models.*
 import com.example.saa_project_db_engine.db.managers.page.IndexPageManager
 import com.example.saa_project_db_engine.toByteArray
 import com.example.saa_project_db_engine.toHexString
@@ -14,6 +13,7 @@ abstract class Node constructor(
     protected val page: IndexLogicalPage,
     protected val compare: KeyCompare
 ) {
+
     val id get() = page.id
 
     var type
@@ -41,45 +41,54 @@ abstract class Node constructor(
     val recordsSize get() = page.records.size
     val minRecord get() = records.first()
 
+    private val mergeRule: MergeRule = { new, old ->
+        val oldValues = IndexValues.fromBytes(old)
+        oldValues.records.forEach {
+            Log.d("TEST", "OLD VALUE: ${it}")
+        }
+        val newValue = IndexValue.fromBytes(new)
+        oldValues.records.add(newValue)
+        oldValues.toBytes()
+    }
+
     fun dump() = page.dump()
 
     fun isLeafNode(): Boolean = type == NodeType.LeafNode
     fun isInternalNode(): Boolean = type == NodeType.InternalNode
     fun isRootNode(): Boolean = type == NodeType.RootNode
 
-    fun get(key: ByteBuffer): List<Record>? {
+    fun get(key: ByteBuffer): Record? {
         return when (val result = find(key)) {
-            is FindResult.ExactMatches -> {
-                result.indexValueMap.map {
-                    val entry = it.value
-                    Record(entry.key, entry.value)
-                }
+            is FindResult.ExactMatch -> {
+                Record(key, result.keyValue.value)
             }
             else -> null
         }
     }
 
-    fun put(key: ByteBuffer, value: ByteBuffer) {
+    fun put(key: ByteBuffer, value: ByteBuffer, merge: MergeRule? = null) {
+        val valueToPersist = IndexValues(mutableListOf(IndexValue.fromBytes(value))).toBytes()
         when (val result = find(key)) {
-            is FindResult.ExactMatches -> {
-                page.insert(
-                    KeyValue(key, value)
-//                    result.indexValueMap.entries.last().key
-                ) // TODO: + 1?
-//                page.update(result.index, KeyValue(key, value))
+            is FindResult.ExactMatch -> {
+                val rule = merge ?: mergeRule
+                val newValue = rule.invoke(value, result.keyValue.value)
+                page.update(
+                    result.index,
+                    KeyValue(key, newValue)
+                )
             }
-            is FindResult.FirstGreaterThanMatch -> page.insert(KeyValue(key, value), result.index)
-            null -> page.insert(KeyValue(key, value), 0)
-            else -> {}
+            is FindResult.FirstGreaterThanMatch -> page.insert(
+                KeyValue(key, valueToPersist),
+                result.index
+            )
+            null -> page.insert(KeyValue(key, valueToPersist), 0)
         }
     }
 
     fun delete(key: ByteBuffer) {
         val result = find(key)
-        if (result is FindResult.ExactMatches) {
-            result.indexValueMap.entries.forEach {
-                page.delete(it.key, it.value)
-            }
+        if (result is FindResult.ExactMatch) {
+            page.delete(result.index, result.keyValue)
         }
     }
 
@@ -122,34 +131,24 @@ abstract class Node constructor(
     }
 
     protected sealed class FindResult {
-        data class ExactMatches(val indexValueMap: Map<Int, KeyValue>) : FindResult()
+        data class ExactMatch(val index: Int, val keyValue: KeyValue) : FindResult()
         data class FirstGreaterThanMatch(val index: Int) : FindResult()
     }
 
     protected fun find(keyByteBuffer: ByteBuffer): FindResult? {
         if (page.records.isEmpty()) return null
         val keyBytes = keyByteBuffer.toByteArray()
-        val matches = mutableMapOf<Int, KeyValue>()
         for ((index, keyValue) in page.records.withIndex()) {
             val key = keyValue.key
             if (key == BPlusTree.logicalMinimumKey) continue
             val compared = compare(
                 key.toByteArray(),
                 keyBytes
-            ) // compares only the search term, the pageId + rowId is obviously not compared
+            )
             when {
-                compared == 0 -> {
-                    matches[index] = keyValue
-                }
-                compared > 0 -> {
-                    if (matches.isEmpty()) {
-                        return FindResult.FirstGreaterThanMatch(index)
-                    }
-                }
+                compared == 0 -> return FindResult.ExactMatch(index, keyValue)
+                compared > 0 -> return FindResult.FirstGreaterThanMatch(index)
             }
-        }
-        if (matches.isNotEmpty()) {
-            return FindResult.ExactMatches(matches)
         }
         return FindResult.FirstGreaterThanMatch(recordsSize)
     }

@@ -9,7 +9,8 @@
     },
     {
       "name": "rowId",
-      "type": "int"
+      "type": "int",
+      "order": "ascending"
     }
   ]
 }

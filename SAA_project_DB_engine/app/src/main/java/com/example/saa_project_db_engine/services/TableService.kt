@@ -3,11 +3,9 @@ package com.example.saa_project_db_engine.services
 import android.content.Context
 import android.util.Log
 import com.example.saa_project_db_engine.KeyCompare
+import com.example.saa_project_db_engine.MergeRule
 import com.example.saa_project_db_engine.ROOT_PAGE_ID
-import com.example.saa_project_db_engine.db.indexing.models.BPlusTree
-import com.example.saa_project_db_engine.db.indexing.models.IndexValue
-import com.example.saa_project_db_engine.db.indexing.models.KeyValue
-import com.example.saa_project_db_engine.db.indexing.models.Record
+import com.example.saa_project_db_engine.db.indexing.models.*
 import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.managers.file.IndexFileManager
 import com.example.saa_project_db_engine.db.managers.page.HeapPageManager
@@ -110,15 +108,16 @@ class TableService constructor(ctx: Context) {
         }
 
         indexFieldRecord = GenericRecord(indexFieldSchema)
-        indexFieldRecord.put(fieldName, "PETKAN") // all records with Ivan as the index key
+
+        indexFieldRecord.put(fieldName, "DRAGAN") // all records with Ivan as the index key
 
         val record = Record(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
         val res = tree.get(record)
 
-        res!!.forEach {
-            val testRes = IndexValue.fromBytes(it.value)
+        val values = IndexValues.fromBytes(res!!.value)
 
-            Log.d("TEST", "res: $testRes")
+        values.records.forEach {
+            Log.d("TEST", "res: $it")
         }
 
 //
