@@ -268,6 +268,7 @@ class StatementParser {
                         else -> {  // identifier
                             state.pop()
                             val cond = WhereClauseType.Condition(word, ConditionType.FIELD)
+                            state.query.whereFields.add(word)
                             state.query.currentCond = cond
                             state.step = ParseStateStep.WhereOperator
                         }
@@ -291,16 +292,17 @@ class StatementParser {
                 ParseStateStep.WhereValue -> {
                     val currentCond = state.query.currentCond
                     val whereValue = state.peek()
-                    if (state.isIdentifier(whereValue)) {
-                        currentCond.operand2 = whereValue
-                        currentCond.operand2Type = ConditionType.FIELD
-                    } else {
+                    if (state.checkIfQuoted()) { // for now, that's how we distinguish between fields and literals
                         val peeked = state.peekQuotedStringWithLength()
                         Log.d("TEST", "PEEKED: $peeked")
                         if (peeked.length != 0) { // some dumb shit scenario with closing bracket
                             currentCond.operand2 = peeked.content
                             currentCond.operand2Type = ConditionType.LITERAL
                         }
+                    } else if (state.isIdentifier(whereValue)) {
+                        currentCond.operand2 = whereValue
+                        currentCond.operand2Type = ConditionType.FIELD
+                        state.query.whereFields.add(whereValue)
                     }
                     state.query.currentCond = currentCond
                     state.pop()

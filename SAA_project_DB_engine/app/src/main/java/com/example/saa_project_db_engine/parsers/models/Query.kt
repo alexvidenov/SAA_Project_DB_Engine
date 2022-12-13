@@ -93,6 +93,7 @@ data class Query(
     var updates: MutableMap<String, String> = mutableMapOf(),
     var inserts: MutableList<MutableList<String>> = mutableListOf(),
     var fields: MutableList<String> = mutableListOf(),
+    var whereFields: MutableList<String> = mutableListOf(),
     var schema: MutableList<FieldSchemaDefinition> = mutableListOf(),
     var currentCond: WhereClauseType.Condition = WhereClauseType.Condition(),
     var operations: MutableList<WhereClauseType.LogicalOperation> = mutableListOf(),

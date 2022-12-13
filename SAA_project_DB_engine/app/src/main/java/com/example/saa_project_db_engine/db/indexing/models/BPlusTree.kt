@@ -1,5 +1,6 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
+import android.util.Log
 import com.example.saa_project_db_engine.KeyCompare
 import com.example.saa_project_db_engine.db.PageFullException
 import com.example.saa_project_db_engine.db.indexing.models.nodes.*
@@ -18,7 +19,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
     private val rootNode: RootNode = RootNode(pageManager.getRootPage(), keyCompare)
     private fun compare(a: ByteBuffer, b: ByteBuffer) = keyCompare(a.toByteArray(), b.toByteArray())
 
-    fun get(key: ByteBuffer): Record? {
+    fun get(key: ByteBuffer): IndexRecord? {
         val result = findLeafNode(key)
         return result.leafNode.get(key)
     }
@@ -39,14 +40,14 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
         result.leafNode.commit(pageManager)
     }
 
-    fun get(record: Record) = get(record.key)
-    fun put(record: Record) = put(record.key, record.value)
-    fun delete(record: Record) = delete(record.key)
+    fun get(record: IndexRecord) = get(record.key)
+    fun put(record: IndexRecord) = put(record.key, record.value)
+    fun delete(record: IndexRecord) = delete(record.key)
 
     fun scan(
         startKey: ByteBuffer? = logicalMinimumKey,
         endKey: ByteBuffer? = logicalMaximumKey
-    ): Sequence<Record> {
+    ): Sequence<IndexRecord> {
         if (startKey == endKey) return sequenceOf()
         val isAscending = when {
             startKey == logicalMinimumKey -> true
@@ -70,7 +71,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
                     endKey == logicalMaximumKey || compare(
                         it.key,
                         endKey
-                    ) <= 0
+                    ) <= 0 // TODO: use that for GTE / GT
                 }   // it <= endKey
         } else {
             generateSequence(firstNode) { if (it == lastNode) null else createLeafNode(it.previousId) }
@@ -104,7 +105,9 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
         key: ByteBuffer?,
         parentNode: InternalNode = rootNode, pathFromRoot: List<InternalNode> = listOf()
     ): FindResult {
-        if (parentNode.isLeafNode()) return FindResult(parentNode, pathFromRoot) // No root yet
+        if (parentNode.isLeafNode()) {
+            return FindResult(parentNode, pathFromRoot) // No root yet
+        }
         val newPathFromRoot = pathFromRoot + parentNode
         val childPageId = when (key) {
             logicalMinimumKey -> parentNode.firstChildPageId()

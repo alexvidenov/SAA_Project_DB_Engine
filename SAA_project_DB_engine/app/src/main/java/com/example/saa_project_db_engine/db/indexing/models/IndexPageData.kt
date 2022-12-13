@@ -33,7 +33,7 @@ data class IndexPageData(
             val mapped = records.map {
                 val indexedRecord = it as IndexedRecord
                 val row =
-                    KeyValue(indexedRecord.get(1) as ByteBuffer, indexedRecord.get(0) as ByteBuffer)
+                    KeyValue(indexedRecord.get(0) as ByteBuffer, indexedRecord.get(1) as ByteBuffer)
                 row
             }.toMutableList()
             return IndexPageData(

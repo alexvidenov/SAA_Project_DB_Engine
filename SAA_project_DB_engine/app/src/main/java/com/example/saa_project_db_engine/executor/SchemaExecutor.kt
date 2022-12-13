@@ -2,6 +2,7 @@ package com.example.saa_project_db_engine.executor
 
 import android.content.Context
 import android.util.Log
+import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.parsers.models.FieldSchemaDefinition
 import com.example.saa_project_db_engine.parsers.models.Query
@@ -10,7 +11,7 @@ import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
 import kotlin.math.log
 
-class SchemaExecutor constructor(private val ctx: Context) {
+class SchemaExecutor constructor(ctx: Context) {
     private val tableService = TableService(ctx)
     private val parser = StatementParser()
 
@@ -37,7 +38,13 @@ class SchemaExecutor constructor(private val ctx: Context) {
                 handleInsert(query.table, query.fields, query.inserts)
             }
             QueryType.Select -> {
-                handleSelect(query.table, query.fields, query.operations)
+                handleSelect(
+                    query.table,
+                    query.fields,
+                    query.whereFields,
+                    query.operations,
+                    query.currentCond
+                )
             }
             QueryType.Update -> TODO()
             QueryType.Delete -> TODO()
@@ -91,9 +98,16 @@ class SchemaExecutor constructor(private val ctx: Context) {
     private fun handleSelect(
         tableName: String,
         fields: MutableList<String>,
-        conditions: MutableList<WhereClauseType.LogicalOperation>
+        whereFields: MutableList<String>,
+        conditions: MutableList<WhereClauseType.LogicalOperation>,
+        currentCond: WhereClauseType.Condition? = null
     ) {
-        tableService.select(tableName, fields, conditions)
+        val res: SelectResultModel = if (conditions.isEmpty()) {
+            tableService.select(tableName, fields, whereFields, currentCond!!)
+        } else {
+            tableService.select(tableName, fields, whereFields, conditions)
+        }
+        Log.d("TEST", "HANDLE SELECT RES: $res")
     }
 
 }

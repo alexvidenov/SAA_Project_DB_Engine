@@ -6,7 +6,6 @@ import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
 
-
 data class HeapPageData(
     override var id: Int,
     override var previousPageId: Int,

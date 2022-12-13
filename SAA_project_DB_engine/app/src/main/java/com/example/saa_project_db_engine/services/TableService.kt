@@ -1,10 +1,17 @@
 package com.example.saa_project_db_engine.services
 
+// SITUATION:
+// DELETE FROM TABLE WHERE {non-indexed column}.
+// affects certain rowIds. You need to update the indec with the affected row ids.
+// Meaning you need index organized table around row Ids ? Right.
+
+// TODO: if not having enough time, simulate it with implicitly created index on rowId.
+
 import android.content.Context
 import android.util.Log
 import com.example.saa_project_db_engine.KeyCompare
-import com.example.saa_project_db_engine.MergeRule
 import com.example.saa_project_db_engine.ROOT_PAGE_ID
+import com.example.saa_project_db_engine.db.NullPersistenceModelException
 import com.example.saa_project_db_engine.db.indexing.models.*
 import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.managers.file.IndexFileManager
@@ -20,7 +27,7 @@ import com.example.saa_project_db_engine.services.models.TableManagerData
 import org.apache.avro.Schema
 import java.io.File
 import java.nio.ByteBuffer
-
+import kotlin.math.log
 
 class TableService constructor(ctx: Context) {
     private val dir = ctx.filesDir
@@ -93,8 +100,10 @@ class TableService constructor(ctx: Context) {
             tableRecord.load(row.value)
             val key = tableRecord.get(fieldName)
 
+            Log.d("TEST", "FREAKING SCHEMA IN CREATEINDEX: ${indexFieldSchema}")
             indexFieldRecord = GenericRecord(indexFieldSchema)
-            indexFieldRecord.put(fieldName, key)
+            Log.d("TEST", "PUTTING: ${fieldName} ${key}")
+            indexFieldRecord.put(fieldName, key) // ut8 bullshit??
 
             val indexValue = IndexValue(pageId, row.rowId!!)
 
@@ -104,20 +113,20 @@ class TableService constructor(ctx: Context) {
                     indexFieldRecord.toByteBuffer(),
                     indexValue.toBytes()
                 )
-            tree.put(Record(keyValue))
+            tree.put(IndexRecord(keyValue))
         }
 
         indexFieldRecord = GenericRecord(indexFieldSchema)
 
-        indexFieldRecord.put(fieldName, "DRAGAN") // all records with Ivan as the index key
+        indexFieldRecord.put(fieldName, 3) // all records with Ivan as the index key
 
-        val record = Record(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
+        val record = IndexRecord(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
         val res = tree.get(record)
 
         val values = IndexValues.fromBytes(res!!.value)
 
         values.records.forEach {
-            Log.d("TEST", "res: $it")
+            Log.d("TEST", "SOMEHOW THIS FREAKING WORKS: $it")
         }
 
 //
@@ -172,17 +181,24 @@ class TableService constructor(ctx: Context) {
             it.startsWith("${tableName}_index")
         }.forEach {
             val file = File(dir, it)
-
+            Log.d("TEST", "file: ${file.name}")
             if (file.extension == "index") {
-                val fileManager = IndexFileManager(File(dir, it))
+                val fileManager = IndexFileManager.load(file)
                 val indexPageManager = IndexPageManager(fileManager)
                 val indexFieldName =
-                    file.name.substringBeforeLast(".").split("_").last() // should be last - 1
+                    file.name.substringBeforeLast(".").split("_").last()
+                Log.d(
+                    "TEST",
+                    "indexFieldName: ${indexFieldName}. AND FUCKING SIZE: ${indexPageManager.get(0)?.records?.size}"
+                )
                 indexes[indexFieldName] = indexPageManager
             } else if (file.extension == "avsc") {
                 val schema = Schema.Parser().parse(file)
                 val record = GenericRecord(schema)
-                val indexFieldName = file.name.substringBeforeLast(".").split("_").last()
+                Log.d("TEST", "SCHEMA IN initIndexManagersForTable ${schema}")
+                val split = file.name.substringBeforeLast(".").split("_")
+                val indexFieldName = split[split.size - 2]
+                Log.d("TEST", "indexFieldName: $indexFieldName")
                 compares[indexFieldName] = record.keyCompare
                 schemas[indexFieldName] = schema
             }
@@ -191,6 +207,21 @@ class TableService constructor(ctx: Context) {
             val key = it.key
             val compare = compares[key]
             val schema = schemas[key]
+            Log.d("TEST", "KILL SOMETHING: ${compare} ${schema}")
+            val tree = BPlusTree(it.value, compare!!)
+
+            val indexFieldRecord = GenericRecord(schema!!)
+
+            indexFieldRecord.put("Id", 3) // all records with Ivan as the index key
+
+            val record = IndexRecord(indexFieldRecord.toByteBuffer(), ByteBuffer.allocate(0))
+            val res = tree.get(record)
+
+            val values = IndexValues.fromBytes(res!!.value)
+
+            values.records.forEach {
+                Log.d("TEST", "res from FUCKING HELL: $it")
+            }
             managers[key] = IndexData(schema!!, BPlusTree(it.value, compare!!))
         }
         return managers
@@ -260,32 +291,47 @@ class TableService constructor(ctx: Context) {
     OR -> just merge the two record sets from index scan
      */
     // WHERE Id > 4 && Id < 6
-    fun indexScan(tableName: String, op: WhereClauseType.LogicalOperation) {
+    private fun indexScan(tableName: String, op: WhereClauseType.LogicalOperation): IndexValues? {
         val data = managerPool[tableName]!!
         when (op.operator) {
             LogicalOperator.AND -> {
                 val leftCond = op.leftNode
                 val rightCond = op.rightNode
                 val leftOperand1 = leftCond!!.operand1
-                val rightOperand2 = rightCond!!.operand1
-                if (leftOperand1 == rightOperand2) {
-                    val indexFieldData = data.indexes[leftOperand1]!!
-                    val record = GenericRecord(indexFieldData.indexSchema)
-                    val tree = indexFieldData.tree
+                val rightOperand1 = rightCond!!.operand1
+                var lower: ByteBuffer = ByteBuffer.allocate(0)
+                var upper: ByteBuffer = ByteBuffer.allocate(0)
+                // excludes automatically the case of equality (for the sake of simplicity, again)
+                if (leftOperand1 == rightOperand1) {
+                    val indexData = data.indexes[leftOperand1]
+                    val record = GenericRecord(indexData!!.indexSchema)
+                    record.put(
+                        leftOperand1,
+                        convertOperandToNativeType(leftCond.operand2, leftOperand1, record)
+                    )
                     when (leftCond.operator) {
-                        Operator.Undefined -> TODO()
-                        Operator.Eq -> {
-//                            val record =
-//                            tree.get()
-                        }
-                        Operator.Ne -> TODO()
-                        Operator.Gt -> TODO()
-                        Operator.Lt -> TODO()
-                        Operator.Gte -> TODO()
-                        Operator.Lte -> TODO()
+                        Operator.Gt -> lower = record.toByteBuffer()
+                        Operator.Lt -> upper = record.toByteBuffer()
+                        Operator.Gte -> lower = record.toByteBuffer()
+                        Operator.Lte -> upper = record.toByteBuffer()
+                        else -> {}
                     }
+                    return applyBoundedIndexScanCondition(leftOperand1, lower, upper)
                 } else {
-
+                    Log.d("TEST", "NOT EQUAL")
+                    val leftRes = applyIndexCondition(tableName, leftCond)
+                    Log.d("TEST", "LEFT RES: ${leftRes}")
+                    val rightRes = applyIndexCondition(tableName, leftCond)
+                    Log.d("TEST", "RIGHT RES: ${rightRes}")
+                    return if (leftRes != null && rightRes != null) {
+                        val filteredRecords = mutableListOf<IndexValue>()
+                        leftRes.records.forEach {
+                            if (rightRes.records.contains(it)) {
+                                filteredRecords.add(it)
+                            }
+                        }
+                        IndexValues(filteredRecords)
+                    } else null
                 }
             }
             LogicalOperator.OR -> {
@@ -297,80 +343,228 @@ class TableService constructor(ctx: Context) {
             }
             else -> {}
         }
+        return null
     }
 
-    fun applyIndexCondition(condition: WhereClauseType.Condition) {
-        val data = managerPool[condition.operand1]!!
+    private fun indexScan(tableName: String, op: WhereClauseType.Condition): IndexValues? {
+        Log.d("TEST", "applyIndexCondition")
+        return applyIndexCondition(tableName, op)
+    }
+
+    private fun fetchHeapResultsFromIndexValues(
+        tableName: String,
+        fields: List<String>,
+        values: IndexValues
+    ): SelectResultModel {
+        val returnModel: MutableList<MutableList<String>> = mutableListOf()
+        val data = managerPool[tableName]!! // CURRENT TABLE FOR EXAMPLE
+        values.records.forEach {
+            val row = fetchRowFromIndexValue(tableName, it)
+            val array = mutableListOf<String>()
+            val record = GenericRecord(data.tableSchema)
+            record.load(row.value)
+            array.add(row.rowId.toString())
+            fields.forEach { f -> // TODO: LATEST ARGS QUEUE AGAIN
+                Log.d("TEST", "FIELD: $f")
+                val field = record.get(f)
+                Log.d("TEST", "FIELD2: $field")
+                array.add(field.toString())
+            }
+            returnModel.add(array)
+        }
+        return SelectResultModel(fields, returnModel)
+    }
+
+    // assuming the index stays consistent. (which it does, for now)
+    private fun fetchRowFromIndexValue(tableName: String, index: IndexValue): TableRow {
+        val data = managerPool[tableName]!!
+        // TODO: seriously, instead of passing shit all over hte place, have a queue with a data
+        // class that represents different args
+        val heapManager = data.heapPageManager
+        val page = heapManager.get(index.pageId)
+        val recordIndex = page!!.getIndexForRowId(index.rowId)
+        return page.records[recordIndex!!]
+    }
+
+    private fun convertOperandToNativeType(
+        value: String,
+        operand: String,
+        record: GenericRecord
+    ): Any {
+        return convertStringToNativeType(
+            value,
+            fieldType(record, operand)
+        )
+    }
+
+    private fun applyIndexCondition(
+        tableName: String,
+        condition: WhereClauseType.Condition
+    ): IndexValues? {
+        val data = managerPool[tableName]!!
+        val operand1 = condition.operand1
+        val operand2 = condition.operand2
+        Log.d("TEST", "OPERAND1: $operand1")
+        Log.d("TEST", "OPERAND2: $operand2")
+        val indexData = data.indexes[operand1]!!
+        val schema = indexData.indexSchema
         val record =
-            GenericRecord(data.indexes[condition.operand1]!!.indexSchema) // think if this is correct
+            GenericRecord(schema)
+        Log.d(
+            "TEST",
+            "OP1: $operand1, converted: ${convertOperandToNativeType(operand2, operand1, record)}"
+        )
+        record.put(
+            operand1,
+            convertOperandToNativeType(operand2, operand1, record)
+        )
+        val indexRecord = IndexRecord(record.toByteBuffer(), ByteBuffer.allocate(0))
+        val tree = indexData.tree
+        Log.d(
+            "TEST",
+            "TREE: ${tree.debug()}"
+        )
         when (condition.operator) {
             Operator.Eq -> {
-
+                val res = tree.get(indexRecord)
+                if (res != null) {
+                    return IndexValues.fromBytes(res.value)
+                }
+                return null
             }
-            Operator.Ne -> {
-
+            Operator.Ne -> TODO()
+            Operator.Gt -> {
+                val res = tree.scan(startKey = record.toByteBuffer())
+                return sequenceToIndexRecords(res)
             }
-            Operator.Gt -> TODO()
-            Operator.Lt -> TODO()
+            Operator.Lt -> {
+                val res = tree.scan(endKey = record.toByteBuffer())
+                return sequenceToIndexRecords(res)
+            }
             Operator.Gte -> TODO()
             Operator.Lte -> TODO()
-            Operator.Undefined -> {}
+            else -> {}
         }
+        return null
     }
 
-    fun fullTableScan() {
-
+    private fun applyBoundedIndexScanCondition(
+        operandName: String,
+        lower: ByteBuffer,
+        upper: ByteBuffer
+    ): IndexValues? {
+        // TODO: extract this shit, please
+        val data = managerPool[operandName]!!
+        val indexData = data.indexes[operandName]!!
+        val records = indexData.tree.scan(lower, upper)
+        return sequenceToIndexRecords(records)
     }
 
-    fun select(
+    private fun sequenceToIndexRecords(records: Sequence<IndexRecord>): IndexValues? {
+        val indexValuesReturn = mutableListOf<IndexValue>()
+        records.forEach {
+            val indexValues = IndexValues.fromBytes(it.value)
+            indexValuesReturn.addAll(indexValues.records)
+        }
+        return if (indexValuesReturn.isNotEmpty()) {
+            IndexValues(indexValuesReturn)
+        } else null
+    }
+
+    private fun fullTableScan(
         tableName: String,
         fields: List<String>,
         conditions: List<WhereClauseType.LogicalOperation>
     ): SelectResultModel {
-        load(tableName)
         val data = managerPool[tableName]!!
-
-        if (checkForPossibleIndexScan(fields, tableName) && conditions.size == 1) {
-            indexScan(tableName, conditions.first())
-        } else {
-            fullTableScan()
-        }
-
-        var curPageId = ROOT_PAGE_ID
 
         val values: MutableList<MutableList<String>> = mutableListOf()
 
-        loop@ while (true) {
-            try {
-                Log.d("TEST", "GETTING $curPageId")
-                val page = data.heapPageManager.get(curPageId)
-                Log.d("TEST", "records size: ${page!!.records.size}")
+        data.heapPageManager.forEachRowPageIndexed { row, pageId ->
+            val record = GenericRecord(data.tableSchema)
+            record.load(row.value)
 
-                page.records.forEach {
-                    Log.d("TEST", "PAGE")
-                    val record = GenericRecord(data.tableSchema)
+            val res = parseSubExpression(record, conditions)
 
-                    Log.d("TEST", "${it.value} ${it.rowId}")
-                    record.load(it.value)
-
-                    val res = parseSubExpression(record, conditions)
-
-                    if (res) {
-                        val array = mutableListOf<String>()
-                        fields.forEach { f ->
-                            Log.d("TEST", "FIELD: $f")
-                            val field = record.get(f)
-                            Log.d("TEST", "FIELD2: $field")
-                            array.add(field.toString())
-                        }
-                        values.add(array)
-                    }
+            Log.d("EXPR", "R0W RES: ${res}")
+            if (res) {
+                val array = mutableListOf<String>()
+                fields.forEach { f ->
+                    Log.d("TEST", "FIELD: $f")
+                    val field = record.get(f)
+                    Log.d("TEST", "FIELD2: $field")
+                    array.add(field.toString())
                 }
+                values.add(array)
+            }
+        }
 
-                curPageId++
-            } catch (e: java.lang.Exception) {
-                Log.d("TEST", "BREAKING LOOP LABEL")
-                break@loop
+//        // extract this as well
+//        loop@ while (true) {
+//            try {
+//                Log.d("TEST", "GETTING $curPageId")
+//                val page = data.heapPageManager.get(curPageId)
+//                Log.d("TEST", "records size: ${page!!.records.size}")
+//
+//                page.records.forEach {
+//                    Log.d("TEST", "PAGE")
+//                    val record = GenericRecord(data.tableSchema)
+//
+//                    Log.d("TEST", "${it.value} ${it.rowId}")
+//                    record.load(it.value)
+//
+//                    val res = parseCondition(record)
+//
+//                    val res = parseSubExpression(record, conditions)
+//
+//                    if (res) {
+//                        val array = mutableListOf<String>()
+//                        fields.forEach { f ->
+//                            Log.d("TEST", "FIELD: $f")
+//                            val field = record.get(f)
+//                            Log.d("TEST", "FIELD2: $field")
+//                            array.add(field.toString())
+//                        }
+//                        values.add(array)
+//                    }
+//                }
+//
+//                curPageId++
+//            } catch (e: NullPersistenceModelException) {
+//                Log.d("TEST", "BREAKING LOOP LABEL")
+//                break@loop
+//            }
+//        }
+
+        val model = SelectResultModel(fields, values)
+        Log.d("TEST", "SELECT RESULT MODEL: $model")
+
+        return model
+    }
+
+    private fun fullTableScan(
+        tableName: String,
+        fields: List<String>, cond: WhereClauseType.Condition
+    ): SelectResultModel {
+        val data = managerPool[tableName]!!
+
+        val values: MutableList<MutableList<String>> = mutableListOf()
+
+        data.heapPageManager.forEachRowPageIndexed { row, pageId ->
+            val record = GenericRecord(data.tableSchema)
+            record.load(row.value)
+
+            val res = parseCondition(record, cond)
+
+            if (res) {
+                val array = mutableListOf<String>()
+                fields.forEach { f ->
+                    Log.d("TEST", "FIELD: $f")
+                    val field = record.get(f)
+                    Log.d("TEST", "FIELD2: $field")
+                    array.add(field.toString())
+                }
+                values.add(array)
             }
         }
 
@@ -380,9 +574,55 @@ class TableService constructor(ctx: Context) {
         return model
     }
 
-    private fun checkForPossibleIndexScan(fields: List<String>, tableName: String): Boolean {
+    fun select(
+        tableName: String,
+        fields: List<String>, whereFields: List<String>, currentCond: WhereClauseType.Condition
+    ): SelectResultModel {
+        load(tableName)
+        return if (analysePossibleIndexScan(whereFields, tableName)) {
+            Log.d("TEST", "INDEX SCAN")
+            val indexes = indexScan(tableName, currentCond)
+            if (indexes != null) {
+                Log.d("TEST", "fetchHeapResultsFromIndexValues")
+                fetchHeapResultsFromIndexValues(tableName, fields, indexes)
+            } else {
+                Log.d("TEST", "null index results")
+                SelectResultModel(fields, mutableListOf())
+            }
+        } else {
+            Log.d("TEST", "FULL TABLE SCAN")
+            fullTableScan(tableName, fields, currentCond)
+        }
+    }
+
+    fun select(
+        tableName: String,
+        fields: List<String>,
+        whereFields: List<String>,
+        conditions: List<WhereClauseType.LogicalOperation>,
+    ): SelectResultModel {
+        load(tableName)
+        return if (analysePossibleIndexScan(whereFields, tableName) && conditions.size == 1) {
+            Log.d("TEST", "INDEX SCAN")
+            val indexes = indexScan(tableName, conditions.first())
+            if (indexes != null) {
+                Log.d("TEST", "fetchHeapResultsFromIndexValues")
+                fetchHeapResultsFromIndexValues(tableName, fields, indexes)
+            } else {
+                Log.d("TEST", "null index results")
+                SelectResultModel(fields, mutableListOf())
+            }
+        } else {
+            Log.d("TEST", "FULL TABLE SCAN")
+            fullTableScan(tableName, fields, conditions)
+        }
+    }
+
+    private fun analysePossibleIndexScan(fields: List<String>, tableName: String): Boolean {
         val data = managerPool[tableName]!!
+        Log.d("TEST", "indexes: ${data.indexes}")
         fields.forEach {
+            Log.d("TEST", "SCAN TEST STRING: ${it}")
             data.indexes[it] ?: return false
         }
         return true
@@ -396,13 +636,13 @@ class TableService constructor(ctx: Context) {
         var currentOpType: LogicalOperator?
         var currentCachedOperationResult = true
         var i = 0
-        Log.d("TEST", "operations: $ops")
+        Log.d("EXPR", "operations: $ops")
         while (i <= ops.size - 1) {
             val op = ops[i]
-            Log.d("TEST", "operation: $op")
+            Log.d("EXPR", "operation: $op")
             currentOpType = op.operator
             val parseState = parseLogicalOperation(record, op)
-            Log.d("TEST", "Empty state: ${parseState.empty}")
+            Log.d("EXPR", "Empty state: ${parseState.empty}")
             when (parseState.empty) {
                 LogicalOperationParseResultEmpty.NONE -> { // only the init value in the logical foldl (from FP)
                     i++
@@ -427,7 +667,7 @@ class TableService constructor(ctx: Context) {
                     )
                 }
             }
-            Log.d("TEST", "currentCachedOperationResult: $currentCachedOperationResult")
+            Log.d("EXPR", "currentCachedOperationResult: $currentCachedOperationResult")
         }
         return currentCachedOperationResult
     }
@@ -448,23 +688,24 @@ class TableService constructor(ctx: Context) {
         var right: Boolean? = null
         op.leftNode?.let {
             left = parseCondition(record, it)
-            Log.d("TEST", "parsed left node: $left")
+            Log.d("EXPR", "parsed left node: $left")
         }
         op.rightNode?.let {
             right = parseCondition(record, it)
-            Log.d("TEST", "parsed right node: $right")
+            Log.d("EXPR", "parsed right node: $right")
         }
         op.leftSubExpr?.let {
             left = parseSubExpression(record, it)
-            Log.d("TEST", "parsed left subexpr: $left")
+            Log.d("EXPR", "parsed left subexpr: $left")
         }
         op.rightSubExpr?.let {
             right = parseSubExpression(record, it)
-            Log.d("TEST", "parsed right subexpr: $right")
+            Log.d("EXPR", "parsed right subexpr: $right")
         }
 
         return if (left != null && right != null) {
             val res = applyOperation(left, right, op.operator!!)
+            Log.d("EXPR", "after applying operation: $res")
             LogicalOperationParseResult(res, LogicalOperationParseResultEmpty.NONE)
         } else {
             if (left == null) {
@@ -480,6 +721,7 @@ class TableService constructor(ctx: Context) {
         var op2: Any? = null
         var typeToConvert: Schema.Type? = null
         var res = false
+        Log.d("EXPR", "PARSE CONDITION: ${cond}")
         when (cond.operand1Type) {
             ConditionType.LITERAL -> {
                 op1 = cond.operand1
@@ -504,8 +746,8 @@ class TableService constructor(ctx: Context) {
             else -> {}
         }
         Log.d(
-            "TEST",
-            "CONDITION: \n$op1\n$op2\n${cond.operator} ${op1!!.javaClass.name} ${op2!!.javaClass.name}"
+            "EXPR",
+            "CONDITION: \n$op1\n$op2\n${cond.operator} $op1 ${op1!!.javaClass.name} $op2 ${op2!!.javaClass.name}"
         )
         op1 = (op1 as Comparable<Any>)
         op2 = (op2 as Comparable<*>)

@@ -35,8 +35,8 @@ abstract class Node constructor(
         }
 
     val size get() = page.size
-    val records get() = page.records.asSequence().map { Record(it) }
-    val recordsReversed get() = page.records.reversed().asSequence().map { Record(it) }
+    val records get() = page.records.asSequence().map { IndexRecord(it) }
+    val recordsReversed get() = page.records.reversed().asSequence().map { IndexRecord(it) }
 
     val recordsSize get() = page.records.size
     val minRecord get() = records.first()
@@ -57,10 +57,10 @@ abstract class Node constructor(
     fun isInternalNode(): Boolean = type == NodeType.InternalNode
     fun isRootNode(): Boolean = type == NodeType.RootNode
 
-    fun get(key: ByteBuffer): Record? {
+    fun get(key: ByteBuffer): IndexRecord? {
         return when (val result = find(key)) {
             is FindResult.ExactMatch -> {
-                Record(key, result.keyValue.value)
+                IndexRecord(key, result.keyValue.value)
             }
             else -> null
         }
@@ -92,9 +92,9 @@ abstract class Node constructor(
         }
     }
 
-    fun get(record: Record) = get(record.key)
-    fun put(record: Record) = put(record.key, record.value)
-    fun delete(record: Record) = delete(record.key)
+    fun get(record: IndexRecord) = get(record.key)
+    fun put(record: IndexRecord) = put(record.key, record.value)
+    fun delete(record: IndexRecord) = delete(record.key)
 
     fun split(pageManager: IndexPageManager): IndexLogicalPage {
         return pageManager.split(page)
@@ -139,6 +139,7 @@ abstract class Node constructor(
         if (page.records.isEmpty()) return null
         val keyBytes = keyByteBuffer.toByteArray()
         for ((index, keyValue) in page.records.withIndex()) {
+            Log.d("TEST", "RECORD FUCKING INDEX: ${index} ${keyValue}")
             val key = keyValue.key
             if (key == BPlusTree.logicalMinimumKey) continue
             val compared = compare(
@@ -146,10 +147,17 @@ abstract class Node constructor(
                 keyBytes
             )
             when {
-                compared == 0 -> return FindResult.ExactMatch(index, keyValue)
-                compared > 0 -> return FindResult.FirstGreaterThanMatch(index)
+                compared == 0 -> {
+                    Log.d("TEST", "EXACT MATCH")
+                    return FindResult.ExactMatch(index, keyValue)
+                }
+                compared > 0 -> {
+                    Log.d("TEST", "greater than MATCH")
+                    return FindResult.FirstGreaterThanMatch(index)
+                }
             }
         }
+        Log.d("TEST", "greater than MATCH AT END OF FUNC")
         return FindResult.FirstGreaterThanMatch(recordsSize)
     }
 

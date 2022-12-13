@@ -46,7 +46,6 @@ class HeapFileManager private constructor(
 
     override fun writeModel(model: HeapLogicalPage) {
         writeBuffer(model.id, model.dump())
-        Log.d("TEST", "NEXT ROW ID IN HEAP MANAGER IS :${nextRowId}")
         writeMetadata() // persists next system-maintained rowId
     }
 }

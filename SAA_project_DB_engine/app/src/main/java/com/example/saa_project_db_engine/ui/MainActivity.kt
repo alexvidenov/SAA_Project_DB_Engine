@@ -94,25 +94,31 @@ class MainActivity : AppCompatActivity() {
     private fun testCreate() {
         val executor = SchemaExecutor(this)
 
-        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+//        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
+//
+//        executor.execute("CreateIndex SampleId ON Sample (Id)")
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
+        // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+        // "Select Id FROM Sample WHERE (Name == 'IVAN' AND Id == '2') OR Name == 'PETKAN'"
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
-
-        executor.execute("CreateIndex SampleId ON Sample (Name)")
-
-        //        executor.execute("Select Name, BirthDate FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '1'")
+//        executor.execute("Select Name, BirthDate FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '1'")
 
 
         // Select Name, DateBirth FROM Sample WHERE (Id == '6' OR Id == '6') AND (Id == '7' OR Id == '7') OR (Id == '8' OR Id == '8')
@@ -124,5 +130,6 @@ class MainActivity : AppCompatActivity() {
 //        Log.d(
 //            "TEST", "QUERY: $query"
 //        )
+
     }
 }
