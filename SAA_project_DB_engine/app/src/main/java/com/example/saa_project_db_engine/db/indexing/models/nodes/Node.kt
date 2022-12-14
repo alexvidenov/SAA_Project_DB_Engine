@@ -139,7 +139,6 @@ abstract class Node constructor(
         if (page.records.isEmpty()) return null
         val keyBytes = keyByteBuffer.toByteArray()
         for ((index, keyValue) in page.records.withIndex()) {
-            Log.d("TEST", "RECORD FUCKING INDEX: ${index} ${keyValue}")
             val key = keyValue.key
             if (key == BPlusTree.logicalMinimumKey) continue
             val compared = compare(

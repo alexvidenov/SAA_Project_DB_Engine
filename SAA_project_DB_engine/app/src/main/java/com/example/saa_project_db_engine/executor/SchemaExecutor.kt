@@ -9,7 +9,10 @@ import com.example.saa_project_db_engine.parsers.models.Query
 import com.example.saa_project_db_engine.parsers.models.QueryType
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
-import kotlin.math.log
+import com.example.saa_project_db_engine.services.extensions.buildTableSchemaRepresentation
+import com.example.saa_project_db_engine.services.extensions.createIndex
+import com.example.saa_project_db_engine.services.extensions.createTable
+import com.example.saa_project_db_engine.services.models.WhereClause
 
 class SchemaExecutor constructor(ctx: Context) {
     private val tableService = TableService(ctx)
@@ -47,7 +50,9 @@ class SchemaExecutor constructor(ctx: Context) {
                 )
             }
             QueryType.Update -> TODO()
-            QueryType.Delete -> TODO()
+            QueryType.Delete -> {
+                handleDelete()
+            }
             QueryType.CreateIndex -> {
                 tableService.createIndex(query.table, query.indexName, query.fields.first())
             }
@@ -56,35 +61,8 @@ class SchemaExecutor constructor(ctx: Context) {
     }
 
     private fun handleCreateTable(tableName: String, fields: List<FieldSchemaDefinition>) {
-        val avroSchema = StringBuilder()
-        var builder = avroSchema
-            .append("{")
-            .append("\"name\":")
-            .append("\"${tableName}\"")
-            .append(",")
-            .append("\"type\": \"record\"")
-            .append(",")
-            .append("\"fields\": [")
-        fields.forEachIndexed { i, it ->
-            builder = builder
-                .append("{\"name\":")
-                .append("\"${it.name}\",")
-                .append("\"type\": \"${it.type}\"")
-            if (it.default != null) {
-                var valueToAppend = it.default
-                if (it.type == "string") {
-                    valueToAppend = "\"${valueToAppend}\""
-                }
-                builder = builder.append(",\"default\": $valueToAppend")
-            }
-            builder = builder.append("}")
-            if (i != fields.size - 1) {
-                builder = builder.append(",")
-            }
-        }
-        builder = builder.append("]}")
-        val string = builder.toString()
-        tableService.createTable(tableName, string)
+        val schema = buildTableSchemaRepresentation(tableName, fields)
+        tableService.createTable(tableName, schema)
     }
 
     private fun handleInsert(
@@ -102,12 +80,26 @@ class SchemaExecutor constructor(ctx: Context) {
         conditions: MutableList<WhereClauseType.LogicalOperation>,
         currentCond: WhereClauseType.Condition? = null
     ) {
-        val res: SelectResultModel = if (conditions.isEmpty()) {
-            tableService.select(tableName, fields, whereFields, currentCond!!)
+        val res: SelectResultModel = if (conditions.isEmpty() && currentCond != null) {
+            tableService.whereClauseWithHandlers(
+                tableName,
+                fields,
+                whereFields,
+                WhereClause.SingleCondition(currentCond)
+            )
         } else {
-            tableService.select(tableName, fields, whereFields, conditions)
+            tableService.whereClauseWithHandlers(
+                tableName,
+                fields,
+                whereFields,
+                WhereClause.LogicalOperations(conditions)
+            )
         }
         Log.d("TEST", "HANDLE SELECT RES: $res")
+    }
+
+    private fun handleDelete() {
+
     }
 
 }

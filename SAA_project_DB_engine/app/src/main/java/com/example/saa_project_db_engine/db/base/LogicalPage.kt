@@ -59,7 +59,6 @@ abstract class LogicalPage<T : WithByteUtils, D : PageData<T>> protected constru
         val keyValue = records[index]
         val newByteSize = calcPageSize(-keyValue.toAvroBytesSize(), -1)
         records[index] = old?.empty() as T // I am the one who checks, don't listen to the linter
-//        data.records.removeAt(index)
         byteSize = newByteSize
         return keyValue
     }
