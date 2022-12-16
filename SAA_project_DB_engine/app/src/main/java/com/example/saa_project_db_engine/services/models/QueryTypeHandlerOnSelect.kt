@@ -50,8 +50,9 @@ class UpdateHandler() : QueryTypeHandlerOnSelect {
 
 }
 
-class DeleteHandler() : QueryTypeHandlerOnSelect {
+class DeleteHandler constructor() : QueryTypeHandlerOnSelect {
     override fun handle(page: HeapLogicalPage, index: Int, row: TableRow) {
+        Log.d("DELETE", "deleting row: ${row.rowId}")
         page.delete(index, row)
     }
 }

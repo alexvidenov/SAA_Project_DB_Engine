@@ -110,13 +110,18 @@ class MainActivity : AppCompatActivity() {
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 //
-//        executor.execute("CreateIndex SampleId ON Sample (Id)")
+//        executor.execute("CreateIndex SampleId ON Sample (Name)")
+//
+//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+//
+//        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
+
+        executor.execute("Select Id FROM Sample WHERE Name == 'PETKAN'")
+
 
         // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 
         // "Select Id FROM Sample WHERE (Name == 'IVAN' AND Id == '2') OR Name == 'PETKAN'"
-
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
 //        executor.execute("Select Name, BirthDate FROM Sample WHERE (Id == '1' OR BirthDate == '01.01.2022') AND Id >= '1'")
 

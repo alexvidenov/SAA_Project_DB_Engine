@@ -43,8 +43,14 @@ fun TableService.fetchRowFromIndexValue(
     // extract general?
     var cbk: (() -> Unit)? = null
 
+    Log.d(
+        "TEST",
+        "HANDLER: ${queryHandler.handler.javaClass} ${queryHandler.handler !is SelectHandler}"
+    )
+
     if (queryHandler.handler !is SelectHandler) {
         cbk = {
+            Log.d("TEST", "committing")
             heapManager.commit(page)
         }
     }

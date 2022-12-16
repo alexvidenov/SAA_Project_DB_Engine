@@ -18,6 +18,9 @@ import java.nio.ByteBuffer
     OR -> just merge the two record sets from index scan
      */
 
+// TODO: Keep cache and index in sync after update and delete.
+// get page id and row id, and evict these. call them affected fields
+
 fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues? {
     val data = managerPool[tableName]!!
     when (clause) {
@@ -81,7 +84,7 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                 else -> {}
             }
         }
-        is WhereClause.SingleCondition -> applyIndexCondition(tableName, clause.cond)
+        is WhereClause.SingleCondition -> return applyIndexCondition(tableName, clause.cond)
     }
     return null
 }

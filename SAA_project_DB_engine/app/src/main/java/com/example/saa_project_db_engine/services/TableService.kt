@@ -57,23 +57,13 @@ class TableService constructor(ctx: Context) {
         data.heapPageManager.insertRows(tableRows)
     }
 
-    fun select2(
-        tableName: String,
-        fields: List<String>,
-        whereFields: List<String>,
-        clauseType: WhereClause
-    ) {
-
-    }
-
-    fun whereClauseWithHandlers(
+    private fun whereClauseWithHandlers(
         tableName: String,
         fields: List<String>,
         whereFields: List<String>,
         clauseType: WhereClause,
         handler: QueryTypeHandler,
     ) {
-        load(tableName)
         if (analysePossibleIndexScan(whereFields, tableName)) {
             Log.d("TEST", "INDEX SCAN")
             val indexes = indexScan(tableName, clauseType)
@@ -81,13 +71,11 @@ class TableService constructor(ctx: Context) {
                 Log.d("TEST", "fetchHeapResultsFromIndexValues")
                 fetchHeapResultsFromIndexValues(tableName, fields, indexes, handler)
             } else {
-                Log.d("TEST", "null index results")
-                SelectResultModel(fields, mutableListOf())
+                Log.d("TEST", "INDEXES ARE NULL")
             }
         } else {
             Log.d("TEST", "FULL TABLE SCAN")
             fullTableScan(tableName, fields, clauseType, handler)
-            SelectResultModel(fields, mutableListOf())
         }
     }
 
@@ -97,10 +85,12 @@ class TableService constructor(ctx: Context) {
         whereFields: List<String>,
         clauseType: WhereClause,
     ) {
+        load(tableName)
         // extract this as well
         val cbks = mutableListOf<() -> Unit>()
         val handler = QueryTypeHandler(handler = DeleteHandler(), persistCbk = {
             it?.let {
+                Log.d("TEST", "callback")
                 cbks.add(it)
             }
         })
@@ -116,6 +106,7 @@ class TableService constructor(ctx: Context) {
         whereFields: List<String>,
         clauseType: WhereClause,
     ): SelectResultModel {
+        load(tableName)
         val data = managerPool[tableName]!!
         val selectHandler = SelectHandler(fields, data.tableSchema)
         val handler =

@@ -51,7 +51,13 @@ class SchemaExecutor constructor(ctx: Context) {
             }
             QueryType.Update -> TODO()
             QueryType.Delete -> {
-                handleDelete()
+                handleDelete(
+                    query.table,
+                    query.fields,
+                    query.whereFields,
+                    query.operations,
+                    query.currentCond
+                )
             }
             QueryType.CreateIndex -> {
                 tableService.createIndex(query.table, query.indexName, query.fields.first())
@@ -81,14 +87,14 @@ class SchemaExecutor constructor(ctx: Context) {
         currentCond: WhereClauseType.Condition? = null
     ) {
         val res: SelectResultModel = if (conditions.isEmpty() && currentCond != null) {
-            tableService.whereClauseWithHandlers(
+            tableService.select(
                 tableName,
                 fields,
                 whereFields,
                 WhereClause.SingleCondition(currentCond)
             )
         } else {
-            tableService.whereClauseWithHandlers(
+            tableService.select(
                 tableName,
                 fields,
                 whereFields,
@@ -98,8 +104,29 @@ class SchemaExecutor constructor(ctx: Context) {
         Log.d("TEST", "HANDLE SELECT RES: $res")
     }
 
-    private fun handleDelete() {
-
+    private fun handleDelete(
+        tableName: String,
+        fields: MutableList<String>,
+        whereFields: MutableList<String>,
+        conditions: MutableList<WhereClauseType.LogicalOperation>,
+        currentCond: WhereClauseType.Condition? = null
+    ) {
+        Log.d("TEST", "delete")
+        if (conditions.isEmpty() && currentCond != null) {
+            tableService.delete(
+                tableName,
+                fields,
+                whereFields,
+                WhereClause.SingleCondition(currentCond)
+            )
+        } else {
+            tableService.delete(
+                tableName,
+                fields,
+                whereFields,
+                WhereClause.LogicalOperations(conditions)
+            )
+        }
     }
 
 }
