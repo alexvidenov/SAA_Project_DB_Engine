@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
         executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
         // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 

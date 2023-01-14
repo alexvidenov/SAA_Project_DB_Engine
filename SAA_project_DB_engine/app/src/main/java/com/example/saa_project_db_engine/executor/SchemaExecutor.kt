@@ -9,6 +9,7 @@ import com.example.saa_project_db_engine.parsers.models.Query
 import com.example.saa_project_db_engine.parsers.models.QueryType
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
+import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.extensions.buildTableSchemaRepresentation
 import com.example.saa_project_db_engine.services.extensions.createIndex
 import com.example.saa_project_db_engine.services.extensions.createTable
@@ -23,6 +24,7 @@ class SchemaExecutor constructor(ctx: Context) {
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
         Log.d("TEST", "PARSED QUERY: $parsed")
+        IndexConsistencyService.clear()
         executeInternal(parsed)
     }
 

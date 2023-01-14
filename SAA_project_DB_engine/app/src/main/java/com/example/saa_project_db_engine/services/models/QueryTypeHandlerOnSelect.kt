@@ -59,12 +59,6 @@ class UpdateHandler() : QueryTypeHandlerOnSelect {
 
 }
 
-enum class RowAffectedOperation {
-    UPDATE, DELETE
-}
-
-data class PageAndRowId(val pageId: Int, val rowId: Int)
-
 class DeleteHandler constructor(private val indexes: Map<String, IndexData>) :
     QueryTypeHandlerOnSelect {
 

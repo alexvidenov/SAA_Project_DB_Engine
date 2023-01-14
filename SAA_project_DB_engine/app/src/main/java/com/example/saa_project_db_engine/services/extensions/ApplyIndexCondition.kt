@@ -19,7 +19,6 @@ fun TableService.applyBoundedIndexScanCondition(
     val data = managerPool[operandName]!!
     val indexData = data.indexes[operandName]!!
     val records = indexData.tree.scan(lower, upper)
-    IndexConsistencyService.addAffectedFieldEntries(operandName, records.toMutableList())
     return sequenceToIndexValues(records)
 }
 
@@ -28,7 +27,7 @@ data class IndexRecordAndIndexName(val name: String, val recordKey: ByteBuffer)
 fun TableService.applyIndexCondition(
     tableName: String,
     condition: WhereClauseType.Condition
-): Pair<IndexRecordAndIndexName, IndexValues?> { // Pair<ByteBuffer, IndexValues?> // buffer is the generic record.toBytes()
+): Pair<IndexRecordAndIndexName, IndexValues?> {
     val data = managerPool[tableName]!!
     val operand1 = condition.operand1
     val operand2 = condition.operand2
