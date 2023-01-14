@@ -21,7 +21,7 @@ abstract class FileManager<R : WithByteUtils, D : PageData<R>, T : LogicalPage<R
     companion object {
         @JvmStatic
         protected fun createPageMetadata(): PageMetadata {
-            return PageMetadata(ROOT_PAGE_ID, 0)
+            return PageMetadata(ROOT_PAGE_ID, 0, 0)
         }
     }
 
@@ -31,6 +31,7 @@ abstract class FileManager<R : WithByteUtils, D : PageData<R>, T : LogicalPage<R
 
     var nextLogicalPageId: Int by metadata
     var nextRowId: Int by metadata
+    var entriesCount: Int by metadata
 
     val lastPageId: Int
         get() = nextLogicalPageId - 1

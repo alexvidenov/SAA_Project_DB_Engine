@@ -120,6 +120,16 @@ class MainActivity : AppCompatActivity() {
 
         executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
+        executor.execute("TableInfo Sample")
+
+//        executor.execute("DropIndex Sample SampleId")
+
+//        executor.execute("ListTables")
+//
+//        executor.execute("ListTables")
+//
+//        executor.execute("DropTable Sample")
+
         // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 
         // "Select Id FROM Sample WHERE (Name == 'IVAN' AND Id == '2') OR Name == 'PETKAN'"

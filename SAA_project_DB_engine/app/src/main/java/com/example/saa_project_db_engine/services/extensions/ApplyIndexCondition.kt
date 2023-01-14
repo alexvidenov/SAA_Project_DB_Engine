@@ -88,7 +88,7 @@ fun TableService.applyIndexCondition(
             GenericRecord(schema)
         record2.load(it.key)
         val values = IndexValues.fromBytes(it.value)
-        Log.d("TEST", "INDEX RECORD: ${record.toString()}") // {"Name": "IVAN"}
+        Log.d("TEST", "INDEX RECORD: $record") // {"Name": "IVAN"}
         Log.d(
             "TEST",
             "INDEX VALUE: ${values}"
@@ -97,7 +97,7 @@ fun TableService.applyIndexCondition(
     return Pair(
         IndexRecordAndIndexName(operand1, record.toByteBuffer()),
         sequenceToIndexValues(records)
-    ) // Pair(IndexRecordAndIndexName(operand1, indexRecord), sequenceToIndexValues(records))
+    )
 }
 
 private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? {

@@ -5,7 +5,8 @@ import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import java.nio.ByteBuffer
 
-data class PageMetadata(var nextLogicalPageId: Int, var nextRowId: Int) : SchemaAware() {
+data class PageMetadata(var nextLogicalPageId: Int, var nextRowId: Int, var entriesCount: Int) :
+    SchemaAware() {
     companion object {
         fun fromBytes(bytes: ByteBuffer): PageMetadata {
             val schema =
@@ -14,8 +15,9 @@ data class PageMetadata(var nextLogicalPageId: Int, var nextRowId: Int) : Schema
             record.load(bytes)
             val nextLogicalPageId = record.get("nextLogicalPageId") as Int
             val nextRowId = record.get("nextRowId") as Int
+            val entriesCount = record.get("entriesCount") as Int
             return PageMetadata(
-                nextLogicalPageId, nextRowId
+                nextLogicalPageId, nextRowId, entriesCount
             )
         }
     }
@@ -24,6 +26,7 @@ data class PageMetadata(var nextLogicalPageId: Int, var nextRowId: Int) : Schema
         val record = GenericRecord(fileSchema)
         record.put("nextLogicalPageId", nextLogicalPageId)
         record.put("nextRowId", nextRowId)
+        record.put("entriesCount", entriesCount)
         return record.toByteBuffer()
     }
 }

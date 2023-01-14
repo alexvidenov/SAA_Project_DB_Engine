@@ -9,6 +9,10 @@
     {
       "name": "nextRowId",
       "type": "int"
+    },
+    {
+      "name": "entriesCount",
+      "type": "int"
     }
   ]
 }

@@ -42,10 +42,7 @@ fun TableService.initIndexManagersForTable(tableName: String): Map<String, Index
     val schemas = mutableMapOf<String, Schema>()
     val managers = mutableMapOf<String, IndexData>()
 
-    files.filter {
-        it.startsWith("${tableName}_index")
-    }.forEach {
-        val file = File(dir, it)
+    getIndexFilesForTable(tableName).forEach { file ->
         when (file.extension) {
             "index" -> {
                 val fileManager = IndexFileManager.load(file)
@@ -72,4 +69,12 @@ fun TableService.initIndexManagersForTable(tableName: String): Map<String, Index
         managers[key] = IndexData(schema!!, tree)
     }
     return managers
+}
+
+fun TableService.getIndexFilesForTable(tableName: String): List<File> {
+    return files.filter {
+        it.startsWith("${tableName}_index")
+    }.map {
+        File(dir, it)
+    }
 }

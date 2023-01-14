@@ -18,8 +18,6 @@ fun TableService.fetchHeapResultsFromIndexValues(
     values: IndexValues,
     handler: QueryTypeHandler
 ) {
-    val data = managerPool[tableName]!!
-
     values.records.forEach {
         fetchRowFromIndexValue(tableName, it, handler)
     }
@@ -38,7 +36,8 @@ fun TableService.fetchRowFromIndexValue(
     val recordIndex = page!!.getIndexForRowId(index.rowId)
     val old = page.records[recordIndex!!]
 
-    queryHandler.handler.handle(page, recordIndex, old)
+    // TODO pass heapManager to manipulate "total entries" count
+    queryHandler.handler.handle(heapManager, page, recordIndex, old)
 
     // extract general?
     var cbk: (() -> Unit)? = null

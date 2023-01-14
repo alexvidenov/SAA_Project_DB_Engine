@@ -18,7 +18,7 @@ class TableService constructor(ctx: Context) {
     val files: List<String>
         get() = dir.listFiles()?.filter { !it.isDirectory }?.map { it.name }!!
 
-    fun load(tableName: String) {
+    fun load(tableName: String) { // TODO: reutrn manager data from here to reduce lines
         loadTable(tableName)
         loadIndex(tableName)
     }

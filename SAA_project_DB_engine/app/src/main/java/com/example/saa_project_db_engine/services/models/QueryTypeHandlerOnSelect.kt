@@ -2,6 +2,7 @@ package com.example.saa_project_db_engine.services.models
 
 import android.util.Log
 import com.example.saa_project_db_engine.db.indexing.models.IndexRecord
+import com.example.saa_project_db_engine.db.managers.page.HeapPageManager
 import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.TableRow
@@ -11,7 +12,7 @@ import org.apache.avro.Schema
 import java.nio.ByteBuffer
 
 interface QueryTypeHandlerOnSelect {
-    fun handle(page: HeapLogicalPage, index: Int, row: TableRow)
+    fun handle(manager: HeapPageManager, page: HeapLogicalPage, index: Int, row: TableRow)
     fun cleanup()
 }
 
@@ -27,7 +28,12 @@ class SelectHandler constructor(private val fields: List<String>, private val sc
 
     private val returnModel: MutableList<MutableList<String>> = mutableListOf()
 
-    override fun handle(page: HeapLogicalPage, index: Int, row: TableRow) {
+    override fun handle(
+        manager: HeapPageManager,
+        page: HeapLogicalPage,
+        index: Int,
+        row: TableRow
+    ) {
         val array = mutableListOf<String>()
         val record = GenericRecord(schema)
         record.load(row.value)
@@ -48,7 +54,12 @@ class SelectHandler constructor(private val fields: List<String>, private val sc
 // pass update values here
 class UpdateHandler() : QueryTypeHandlerOnSelect {
     // pass update specifics to the class in constructor
-    override fun handle(page: HeapLogicalPage, index: Int, row: TableRow) {
+    override fun handle(
+        manager: HeapPageManager,
+        page: HeapLogicalPage,
+        index: Int,
+        row: TableRow
+    ) {
         val newVal = row // TODO: update new fields, create new Generic record
         page.update(index, newVal)
     }
@@ -62,9 +73,15 @@ class UpdateHandler() : QueryTypeHandlerOnSelect {
 class DeleteHandler constructor(private val indexes: Map<String, IndexData>) :
     QueryTypeHandlerOnSelect {
 
-    override fun handle(page: HeapLogicalPage, index: Int, row: TableRow) {
+    override fun handle(
+        manager: HeapPageManager,
+        page: HeapLogicalPage,
+        index: Int,
+        row: TableRow
+    ) {
         Log.d("DELETE", "deleting row: ${row.rowId}")
         page.delete(index, row)
+        manager.recordsCount--
     }
 
     override fun cleanup() {

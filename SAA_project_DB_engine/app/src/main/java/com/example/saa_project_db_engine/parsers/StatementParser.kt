@@ -17,7 +17,6 @@ enum class ParseStateStep {
     CreateIndexOpeningParenthesis,
     CreateIndexFieldName,
     CreateIndexClosingParenthesis,
-    DropTableName,
     SelectField,
     SelectFrom,
     SelectComma,
@@ -42,6 +41,10 @@ enum class ParseStateStep {
     WhereField,
     WhereOperator,
     WhereValue,
+    DropTableName,
+    DropIndexTableName,
+    DropIndexIndexName,
+    TableInfoTableName,
 }
 
 class StatementParser {
@@ -71,6 +74,16 @@ class StatementParser {
                             state.query.type = QueryType.DropTable
                             state.pop()
                             state.step = ParseStateStep.DropTableName
+                        }
+                        "DropIndex" -> {
+                            state.query.type = QueryType.DropIndex
+                            state.pop()
+                            state.step = ParseStateStep.DropIndexTableName
+                        }
+                        "TableInfo" -> {
+                            state.query.type = QueryType.TableInfo
+                            state.pop()
+                            state.step = ParseStateStep.TableInfoTableName
                         }
                         "ListTables" -> {
                             state.query.type = QueryType.ListTables
@@ -469,6 +482,7 @@ class StatementParser {
                 ParseStateStep.CreateIndexFieldName -> {
                     val fieldName = state.peek()
                     state.query.fields.add(fieldName)
+                    state.pop()
                     state.step = ParseStateStep.CreateIndexClosingParenthesis
                 }
                 ParseStateStep.CreateIndexClosingParenthesis -> {
@@ -476,6 +490,22 @@ class StatementParser {
                     if (closing != ")") {
 
                     }
+                    state.pop()
+                }
+                ParseStateStep.DropIndexTableName -> {
+                    val tableName = state.peek()
+                    state.query.table = tableName
+                    state.pop()
+                    state.step = ParseStateStep.DropIndexIndexName
+                }
+                ParseStateStep.DropIndexIndexName -> {
+                    val indexName = state.peek()
+                    state.query.indexName = indexName
+                    state.pop()
+                }
+                ParseStateStep.TableInfoTableName -> {
+                    val tableName = state.peek()
+                    state.query.table = tableName
                     state.pop()
                 }
             }

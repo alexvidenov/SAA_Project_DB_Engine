@@ -2,7 +2,6 @@ package com.example.saa_project_db_engine.executor
 
 import android.content.Context
 import android.util.Log
-import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.parsers.models.FieldSchemaDefinition
 import com.example.saa_project_db_engine.parsers.models.Query
@@ -10,9 +9,7 @@ import com.example.saa_project_db_engine.parsers.models.QueryType
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
-import com.example.saa_project_db_engine.services.extensions.buildTableSchemaRepresentation
-import com.example.saa_project_db_engine.services.extensions.createIndex
-import com.example.saa_project_db_engine.services.extensions.createTable
+import com.example.saa_project_db_engine.services.extensions.*
 import com.example.saa_project_db_engine.services.models.WhereClause
 
 class SchemaExecutor constructor(ctx: Context) {
@@ -35,13 +32,15 @@ class SchemaExecutor constructor(ctx: Context) {
                 handleCreateTable(query.table, query.schema)
             }
             QueryType.DropTable -> {
-
+                tableService.dropTable(query.table)
             }
             QueryType.ListTables -> {
-
+                val tables = tableService.listTables()
+                Log.d("TEST", "tables :$tables")
             }
             QueryType.TableInfo -> {
-
+                val tableInfo = tableService.getTableInfo(query.table)
+                Log.d("TEST", "TABLE INFO: $tableInfo")
             }
             QueryType.Insert -> {
                 tableService.insertRows(query.table, query.fields, query.inserts)
@@ -73,7 +72,7 @@ class SchemaExecutor constructor(ctx: Context) {
                 tableService.createIndex(query.table, query.indexName, query.fields.first())
             }
             QueryType.DropIndex -> {
-
+                tableService.dropIndex(query.table, query.indexName)
             }
         }
     }

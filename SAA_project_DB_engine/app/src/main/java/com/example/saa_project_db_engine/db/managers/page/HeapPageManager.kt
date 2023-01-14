@@ -8,9 +8,16 @@ import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.HeapPageData
 import com.example.saa_project_db_engine.db.storage.models.TableRow
+import kotlin.properties.Delegates
 
 class HeapPageManager constructor(override val fileManager: HeapFileManager) :
     PageManager<TableRow, HeapPageData, HeapLogicalPage>(fileManager) {
+    var recordsCount = fileManager.entriesCount
+        get() = fileManager.entriesCount
+        set(value) {
+            fileManager.entriesCount = value
+            field = value
+        }
 
     init {
         get(fileManager.lastPageId) // pre-warms last page since it's very likely to be used
@@ -37,6 +44,7 @@ class HeapPageManager constructor(override val fileManager: HeapFileManager) :
         Log.d("TEST", "last page id: ${fileManager.lastPageId}")
         val lastPage = get(fileManager.lastPageId)
         rows.forEach {
+            fileManager.entriesCount++
             val newRowId = fileManager.nextRowId
             it.rowId = newRowId
             Log.d("TEST", "next row id: ${fileManager.nextRowId}")

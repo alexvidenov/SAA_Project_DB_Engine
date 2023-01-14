@@ -6,13 +6,15 @@ import kotlin.reflect.KProperty
 
 enum class PageMetadataProperties {
     NextLogicalPageId,
-    NextRowId
+    NextRowId,
+    EntriesCount
 }
 
 inline operator fun <reified T> PageMetadata.getValue(thisRef: Any, property: KProperty<*>): T {
     return when (PageMetadataProperties.valueOf(property.name.safeCapitalize())) {
         PageMetadataProperties.NextLogicalPageId -> nextLogicalPageId as T
         PageMetadataProperties.NextRowId -> nextRowId as T
+        PageMetadataProperties.EntriesCount -> entriesCount as T
     }
 }
 
@@ -23,6 +25,9 @@ operator fun <T> PageMetadata.setValue(thisRef: Any, property: KProperty<*>, val
         }
         PageMetadataProperties.NextRowId -> (value as Int?)?.let {
             nextRowId = it
+        }
+        PageMetadataProperties.EntriesCount -> (value as Int?)?.let {
+            entriesCount = it
         }
     }
 }
