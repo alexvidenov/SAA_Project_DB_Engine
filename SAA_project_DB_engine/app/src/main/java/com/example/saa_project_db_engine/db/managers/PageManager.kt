@@ -63,6 +63,7 @@ abstract class PageManager<B : WithByteUtils, D : PageData<B>, P : LogicalPage<B
     fun commit(page: P?) {
         if (page != null) {
             fileManager.writeModel(page)
+            pool[page.id] = page // Resembles write-through cache
         }
     }
 

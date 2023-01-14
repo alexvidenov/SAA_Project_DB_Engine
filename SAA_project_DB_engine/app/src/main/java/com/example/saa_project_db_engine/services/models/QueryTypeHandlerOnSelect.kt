@@ -1,16 +1,14 @@
 package com.example.saa_project_db_engine.services.models
 
 import android.util.Log
-import com.example.saa_project_db_engine.db.base.LogicalPage
-import com.example.saa_project_db_engine.db.base.PageData
-import com.example.saa_project_db_engine.db.base.WithByteUtils
-import com.example.saa_project_db_engine.db.indexing.models.BPlusTree
-import com.example.saa_project_db_engine.db.indexing.models.IndexValue
+import com.example.saa_project_db_engine.db.indexing.models.IndexRecord
 import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
+import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import org.apache.avro.Schema
+import java.nio.ByteBuffer
 
 interface QueryTypeHandlerOnSelect {
     fun handle(page: HeapLogicalPage, index: Int, row: TableRow)
@@ -65,21 +63,38 @@ enum class RowAffectedOperation {
     UPDATE, DELETE
 }
 
-data class AffectedRow(val pageId: Int, val rowId: Int)
+data class PageAndRowId(val pageId: Int, val rowId: Int)
 
 class DeleteHandler constructor(private val indexes: Map<String, IndexData>) :
     QueryTypeHandlerOnSelect {
-    private val affectedFields: MutableList<AffectedRow> = mutableListOf()
 
     override fun handle(page: HeapLogicalPage, index: Int, row: TableRow) {
         Log.d("DELETE", "deleting row: ${row.rowId}")
-        affectedFields.add(AffectedRow(page.id, row.rowId!!)) // we need the empty
         page.delete(index, row)
     }
 
     override fun cleanup() {
-        affectedFields.forEach {
-//            indexes[""]?.tree.delete(it.)
+        IndexConsistencyService.affectedFieldsMap.entries.forEach {
+            val key = it.key
+            val value = it.value
+            val index = indexes[key]
+            if (index != null) {
+                val tree = index.tree
+                value.forEach { pair ->
+                    val record =
+                        GenericRecord(index.indexSchema)
+                    record.load(pair.first)
+                    pair.second.records.forEach { idxVal ->
+                        Log.d("TEST", "KEY TO DELETE: ${record}")
+                        Log.d("TEST", "IDXVAL: ${idxVal}")
+                        tree.delete(
+                            IndexRecord(pair.first, ByteBuffer.allocate(0)),
+                            idxVal.pageId,
+                            idxVal.rowId
+                        ) // first is the value of the index (Generic record with Ivan)
+                    }
+                }
+            }
         }
     }
 

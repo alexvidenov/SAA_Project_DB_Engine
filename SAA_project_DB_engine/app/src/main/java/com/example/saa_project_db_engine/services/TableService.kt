@@ -86,10 +86,9 @@ class TableService constructor(ctx: Context) {
     ) {
         load(tableName)
         val data = managerPool[tableName]!!
-        data.indexes
         // extract this as well
         val cbks = mutableListOf<() -> Unit>()
-        val handler = QueryTypeHandler(handler = DeleteHandler(), persistCbk = {
+        val handler = QueryTypeHandler(handler = DeleteHandler(data.indexes), persistCbk = {
             it?.let {
                 Log.d("TEST", "callback")
                 cbks.add(it)
@@ -99,6 +98,7 @@ class TableService constructor(ctx: Context) {
         cbks.forEach {
             it.invoke()
         }
+        handler.handler.cleanup()
     }
 
     fun select(

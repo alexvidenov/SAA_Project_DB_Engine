@@ -1,5 +1,6 @@
 package com.example.saa_project_db_engine.services.extensions
 
+import com.example.saa_project_db_engine.db.indexing.models.IndexRecord
 import com.example.saa_project_db_engine.db.indexing.models.IndexValue
 import com.example.saa_project_db_engine.db.indexing.models.IndexValues
 import com.example.saa_project_db_engine.parsers.models.LogicalOperator
@@ -7,6 +8,7 @@ import com.example.saa_project_db_engine.parsers.models.Operator
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
+import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.models.WhereClause
 import java.nio.ByteBuffer
 
@@ -39,6 +41,10 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                             leftOperand1,
                             convertOperandToNativeType(leftCond.operand2, leftOperand1, record)
                         )
+                        val indexRecord = IndexRecord(
+                            record.toByteBuffer(),
+                            ByteBuffer.allocate(0)
+                        ) // use in index
                         when (leftCond.operator) {
                             Operator.Gt -> lower = record.toByteBuffer()
                             Operator.Lt -> upper = record.toByteBuffer()
@@ -55,22 +61,30 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                         }
                         return applyBoundedIndexScanCondition(leftOperand1, lower, upper)
                     } else {
-                        val leftRes = applyIndexCondition(tableName, leftCond)
-                        val rightRes = applyIndexCondition(tableName, leftCond)
+                        val leftPair = applyIndexCondition(tableName, leftCond)
+                        val rightPair = applyIndexCondition(tableName, rightCond)
+                        val leftRes = leftPair.second
+                        val rightRes = rightPair.second
+                        val records: MutableList<Pair<ByteBuffer, IndexValues>>
                         return if (leftRes != null && rightRes != null) {
                             val filteredRecords = mutableListOf<IndexValue>()
                             leftRes.records.forEach {
                                 if (rightRes.records.contains(it)) {
+//                                    records.add(IndexRecord(leftRes.))
                                     filteredRecords.add(it)
                                 }
                             }
+//                            IndexConsistencyService.addAffectedFieldEntries(leftPair.first.name, records.toMutableList())
+//                            IndexConsistencyService.addAffectedFieldEntries(rightPair.first.name, records.toMutableList())
                             IndexValues(filteredRecords)
                         } else null
                     }
                 }
                 LogicalOperator.OR -> {
-                    val indexScanLeftNodeRes = applyIndexCondition(tableName, leftCond!!)
-                    val indexScanRightNodeRes = applyIndexCondition(tableName, rightCond!!)
+                    val indexScanLeftNodePair = applyIndexCondition(tableName, leftCond!!)
+                    val indexScanRightNodePair = applyIndexCondition(tableName, rightCond!!)
+                    val indexScanLeftNodeRes = indexScanLeftNodePair.second
+                    val indexScanRightNodeRes = indexScanRightNodePair.second
                     val filteredRecords = mutableListOf<IndexValue>()
                     indexScanLeftNodeRes?.records?.forEach {
                         filteredRecords.add(it)
@@ -89,7 +103,17 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                 else -> {}
             }
         }
-        is WhereClause.SingleCondition -> return applyIndexCondition(tableName, clause.cond)
+        is WhereClause.SingleCondition -> {
+            val res = applyIndexCondition(tableName, clause.cond)
+            val indexValues = res.second
+            if (indexValues != null) {
+                IndexConsistencyService.addAffectedFieldEntry(
+                    res.first.name,
+                    Pair(res.first.recordKey, indexValues)
+                )
+            }
+            return res.second
+        }
     }
     return null
 }

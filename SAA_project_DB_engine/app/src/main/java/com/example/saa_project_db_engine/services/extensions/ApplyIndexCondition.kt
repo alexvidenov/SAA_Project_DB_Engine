@@ -18,16 +18,17 @@ fun TableService.applyBoundedIndexScanCondition(
 ): IndexValues? {
     val data = managerPool[operandName]!!
     val indexData = data.indexes[operandName]!!
-    IndexConsistencyService.addAffectedFieldEntry() // add the operandName and the index record
     val records = indexData.tree.scan(lower, upper)
-    records.toList() // use
+    IndexConsistencyService.addAffectedFieldEntries(operandName, records.toMutableList())
     return sequenceToIndexValues(records)
 }
+
+data class IndexRecordAndIndexName(val name: String, val recordKey: ByteBuffer)
 
 fun TableService.applyIndexCondition(
     tableName: String,
     condition: WhereClauseType.Condition
-): IndexValues? {
+): Pair<IndexRecordAndIndexName, IndexValues?> { // Pair<ByteBuffer, IndexValues?> // buffer is the generic record.toBytes()
     val data = managerPool[tableName]!!
     val operand1 = condition.operand1
     val operand2 = condition.operand2
@@ -50,17 +51,16 @@ fun TableService.applyIndexCondition(
     val indexRecord = IndexRecord(record.toByteBuffer(), ByteBuffer.allocate(0))
     val tree = indexData.tree
 
-    // have lateinit res here and update the global consistency with it
-    return when (condition.operator) {
+    var records: Sequence<IndexRecord> = sequenceOf()
+    when (condition.operator) {
         Operator.Eq -> {
             val res = tree.get(indexRecord)
             if (res != null) {
-                return IndexValues.fromBytes(res.value)
+                records = sequenceOf(res)
             }
-            null
         }
         Operator.Ne -> {
-            // full index scan with a filter.. kms
+            // full index scan with a filter.. imagine using this shit
             val res = tree.get(indexRecord)
             val filtered = tree.scan().filter {
                 if (res != null) {
@@ -68,26 +68,37 @@ fun TableService.applyIndexCondition(
                 }
                 true
             }
-            sequenceToIndexValues(filtered)
+            records = filtered
         }
         Operator.Gt -> {
-            val res = tree.scan(startKey = record.toByteBuffer())
-            sequenceToIndexValues(res)
+            records = tree.scan(startKey = record.toByteBuffer())
         }
         Operator.Lt -> {
-            val res = tree.scan(endKey = record.toByteBuffer())
-            sequenceToIndexValues(res)
+            records = tree.scan(endKey = record.toByteBuffer())
         }
         Operator.Gte -> {
-            val res = tree.scan(startKey = record.toByteBuffer())
-            sequenceToIndexValues(res)
+            records = tree.scan(startKey = record.toByteBuffer())
         }
         Operator.Lte -> {
-            val res = tree.scan(endKey = record.toByteBuffer())
-            sequenceToIndexValues(res)
+            records = tree.scan(endKey = record.toByteBuffer())
         }
-        else -> null
+        else -> {}
     }
+    records.forEach {
+        val record2 =
+            GenericRecord(schema)
+        record2.load(it.key)
+        val values = IndexValues.fromBytes(it.value)
+        Log.d("TEST", "INDEX RECORD: ${record.toString()}") // {"Name": "IVAN"}
+        Log.d(
+            "TEST",
+            "INDEX VALUE: ${values}"
+        ) // IndexValues(records=[IndexValue(pageId=0, rowId=0), IndexValue(pageId=0, rowId=1), IndexValue(pageId=0, rowId=3), IndexValue(pageId=0, rowId=5)])
+    }
+    return Pair(
+        IndexRecordAndIndexName(operand1, record.toByteBuffer()),
+        sequenceToIndexValues(records)
+    ) // Pair(IndexRecordAndIndexName(operand1, indexRecord), sequenceToIndexValues(records))
 }
 
 private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? {

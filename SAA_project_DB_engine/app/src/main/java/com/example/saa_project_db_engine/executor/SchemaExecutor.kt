@@ -52,6 +52,7 @@ class SchemaExecutor constructor(ctx: Context) {
                     query.operations,
                     query.currentCond, tableService::select
                 )
+                Log.d("TEST", "RESULT FROM SELECT: $res")
                 // emit in flow
             }
             QueryType.Update -> {

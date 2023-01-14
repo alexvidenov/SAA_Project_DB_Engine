@@ -69,7 +69,7 @@ fun TableService.createIndex(tableName: String, indexName: String, fieldName: St
         val keyValue =
             KeyValue(
                 indexFieldRecord.toByteBuffer(),
-                indexValue.toBytes()
+                indexValue.toBytes() // TODO: index values?? (array)
             )
 
         tree.put(IndexRecord(keyValue))

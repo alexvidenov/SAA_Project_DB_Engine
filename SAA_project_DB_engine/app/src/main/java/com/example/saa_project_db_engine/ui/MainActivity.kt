@@ -94,30 +94,31 @@ class MainActivity : AppCompatActivity() {
     private fun testCreate() {
         val executor = SchemaExecutor(this)
 
-//        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
-//
-//        executor.execute("CreateIndex SampleId ON Sample (Name)")
-//
-//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
-//
-//        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'PETKAN'")
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
 
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
+
+        executor.execute("CreateIndex SampleId ON Sample (Name)")
+
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+
+        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
+
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
         // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 
