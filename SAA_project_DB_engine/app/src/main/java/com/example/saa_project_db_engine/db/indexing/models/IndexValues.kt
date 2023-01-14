@@ -1,5 +1,6 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
+import android.util.Log
 import com.example.saa_project_db_engine.db.base.SchemaAware
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
@@ -9,6 +10,7 @@ import java.nio.ByteBuffer
 data class IndexValues(val records: MutableList<IndexValue>) : SchemaAware() {
     companion object {
         fun fromBytes(bytes: ByteBuffer): IndexValues {
+            Log.d("TEST", "BYTES FUCKING: ${bytes}") // FAILS BECAUSE ITS EMPTY
             val schema =
                 SchemasServiceLocator.getSchemaFor(this::class.java.declaringClass.simpleName)
             val record = GenericRecord(schema)

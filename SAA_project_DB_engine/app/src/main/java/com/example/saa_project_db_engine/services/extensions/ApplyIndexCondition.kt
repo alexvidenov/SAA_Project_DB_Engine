@@ -10,6 +10,7 @@ import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import java.nio.ByteBuffer
+import kotlin.math.log
 
 fun TableService.applyBoundedIndexScanCondition(
     operandName: String,
@@ -59,14 +60,14 @@ fun TableService.applyIndexCondition(
             }
         }
         Operator.Ne -> {
-            // full index scan with a filter.. imagine using this shit
             val res = tree.get(indexRecord)
             val filtered = tree.scan().filter {
                 if (res != null) {
-                    it.key === res.key
+                    return@filter it.key == res.key
                 }
-                true
+                return@filter true
             }
+            Log.d("TEST", "FILTERED: ${filtered.toMutableList()}")
             records = filtered
         }
         Operator.Gt -> {
@@ -83,17 +84,18 @@ fun TableService.applyIndexCondition(
         }
         else -> {}
     }
-    records.forEach {
-        val record2 =
-            GenericRecord(schema)
-        record2.load(it.key)
-        val values = IndexValues.fromBytes(it.value)
-        Log.d("TEST", "INDEX RECORD: $record") // {"Name": "IVAN"}
-        Log.d(
-            "TEST",
-            "INDEX VALUE: ${values}"
-        ) // IndexValues(records=[IndexValue(pageId=0, rowId=0), IndexValue(pageId=0, rowId=1), IndexValue(pageId=0, rowId=3), IndexValue(pageId=0, rowId=5)])
-    }
+//    records.forEach {
+//        val record2 =
+//            GenericRecord(schema)
+//        record2.load(it.key)
+//        val values = IndexValues.fromBytes(it.value)
+//        Log.d("TEST", "INDEX RECORD: $record") // {"Name": "IVAN"}
+//        Log.d(
+//            "TEST",
+//            "INDEX VALUE: ${values}"
+//        ) // IndexValues(records=[IndexValue(pageId=0, rowId=0), IndexValue(pageId=0, rowId=1), IndexValue(pageId=0, rowId=3), IndexValue(pageId=0, rowId=5)])
+//    }
+    Log.d("TEST", "NOPE")
     return Pair(
         IndexRecordAndIndexName(operand1, record.toByteBuffer()),
         sequenceToIndexValues(records)
@@ -103,8 +105,11 @@ fun TableService.applyIndexCondition(
 private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? {
     val indexValuesReturn = mutableListOf<IndexValue>()
     records.forEach {
-        val indexValues = IndexValues.fromBytes(it.value)
-        indexValuesReturn.addAll(indexValues.records)
+        if (it.value.capacity() != 0) { // in case scan actually performs full scan returning empty buffer
+            val indexValues = IndexValues.fromBytes(it.value)
+            Log.d("TEST", "ADDING sequenceToIndexValues: ${indexValues}")
+            indexValuesReturn.addAll(indexValues.records)
+        }
     }
     return if (indexValuesReturn.isNotEmpty()) {
         IndexValues(indexValuesReturn)

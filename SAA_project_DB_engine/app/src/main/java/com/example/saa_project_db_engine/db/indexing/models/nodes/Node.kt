@@ -48,6 +48,7 @@ abstract class Node constructor(
         }
         val newValue = IndexValue.fromBytes(new)
         oldValues.records.add(newValue)
+        Log.d("TEST", "MERGE RES: ${oldValues.records}")
         oldValues.toBytes()
     }
 
@@ -67,6 +68,7 @@ abstract class Node constructor(
     }
 
     fun put(key: ByteBuffer, value: ByteBuffer, merge: MergeRule? = null) {
+        Log.d("TEST", "BTREE PUT")
         val valueToPersist = IndexValues(mutableListOf(IndexValue.fromBytes(value))).toBytes()
         when (val result = find(key)) {
             is FindResult.ExactMatch -> {
@@ -77,11 +79,16 @@ abstract class Node constructor(
                     KeyValue(key, newValue)
                 )
             }
-            is FindResult.FirstGreaterThanMatch -> page.insert(
-                KeyValue(key, valueToPersist),
-                result.index
-            )
-            null -> page.insert(KeyValue(key, valueToPersist), 0)
+            is FindResult.FirstGreaterThanMatch -> {
+                Log.d("TEST", "FirstGreaterThanMatch: ${result.index}")
+                page.insert(
+                    KeyValue(key, valueToPersist),
+                    result.index
+                )
+            }
+            null -> {
+                page.insert(KeyValue(key, valueToPersist), 0)
+            }
         }
     }
 

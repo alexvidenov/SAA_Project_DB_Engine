@@ -15,11 +15,7 @@ import java.nio.ByteBuffer
 /*
     AND -> return only the rows that exist in both index scan sets
     OR -> just merge the two record sets from index scan
-
  */
-
-// TODO: Keep cache and index in sync after update and delete.
-// get page id and row id, and evict these. call them affected fields
 
 fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues? {
     val data = managerPool[tableName]!!
@@ -73,21 +69,18 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                     return logicalOrIndexHandler(tableName, leftCond, rightCond)
                 }
                 LogicalOperator.NOT -> {
-
+                    Log.d("TEST", "NOT BRO")
+                    val invertedCond = rightCond!!
+                    invertedCond.operator = invertOperator(invertedCond.operator)
+                    val res = singleCond(tableName, invertedCond)
+                    Log.d("TEST", "RES FROM NOT :${res}")
+                    return res
                 }
                 else -> {}
             }
         }
         is WhereClause.SingleCondition -> {
-            val res = applyIndexCondition(tableName, clause.cond)
-            val indexValues = res.second
-            if (indexValues != null) {
-                IndexConsistencyService.addAffectedFieldEntry(
-                    res.first.name,
-                    Pair(res.first.recordKey, indexValues)
-                )
-            }
-            return res.second
+            return singleCond(tableName, clause.cond)
         }
     }
     return null
@@ -155,4 +148,16 @@ fun TableService.logicalOrIndexHandler(
         Pair(indexScanRightNodePair.first.recordKey, indexValues)
     )
     return indexValues
+}
+
+fun TableService.singleCond(tableName: String, cond: WhereClauseType.Condition): IndexValues? {
+    val res = applyIndexCondition(tableName, cond)
+    val indexValues = res.second
+    if (indexValues != null) {
+        IndexConsistencyService.addAffectedFieldEntry(
+            res.first.name,
+            Pair(res.first.recordKey, indexValues)
+        )
+    }
+    return res.second
 }

@@ -112,15 +112,15 @@ class MainActivity : AppCompatActivity() {
 
         executor.execute("CreateIndex SampleId ON Sample (Name)")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
         executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
         executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+        executor.execute("Select Id FROM Sample WHERE NOT Name == 'IVAN'")
 
-        executor.execute("TableInfo Sample")
+//        executor.execute("TableInfo Sample")
 
 //        executor.execute("DropIndex Sample SampleId")
 
