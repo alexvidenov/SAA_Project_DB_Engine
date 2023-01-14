@@ -11,12 +11,10 @@ import com.example.saa_project_db_engine.services.models.WhereClause
 import java.nio.ByteBuffer
 
 /*
-    for the sake of simplicity, I won't write a goddamn query analyser to optimise usage of indexes in complex
-    queries with subexpressions. Way the fuck out of scope. Next time delve into the topic when you create assignments.
-
     AND -> return only the rows that exist in both index scan sets
     OR -> just merge the two record sets from index scan
-     */
+
+ */
 
 // TODO: Keep cache and index in sync after update and delete.
 // get page id and row id, and evict these. call them affected fields
@@ -42,6 +40,13 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                             convertOperandToNativeType(leftCond.operand2, leftOperand1, record)
                         )
                         when (leftCond.operator) {
+                            Operator.Gt -> lower = record.toByteBuffer()
+                            Operator.Lt -> upper = record.toByteBuffer()
+                            Operator.Gte -> lower = record.toByteBuffer()
+                            Operator.Lte -> upper = record.toByteBuffer()
+                            else -> {}
+                        }
+                        when (rightCond.operator) {
                             Operator.Gt -> lower = record.toByteBuffer()
                             Operator.Lt -> upper = record.toByteBuffer()
                             Operator.Gte -> lower = record.toByteBuffer()

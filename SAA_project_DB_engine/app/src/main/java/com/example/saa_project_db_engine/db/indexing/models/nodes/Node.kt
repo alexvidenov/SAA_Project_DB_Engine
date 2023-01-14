@@ -85,16 +85,23 @@ abstract class Node constructor(
         }
     }
 
-    fun delete(key: ByteBuffer) {
+    fun delete(key: ByteBuffer, pageId: Int, rowId: Int) {
         val result = find(key)
         if (result is FindResult.ExactMatch) {
-            page.delete(result.index, result.keyValue)
+            val indexValues = IndexValues.fromBytes(result.keyValue.value)
+            val indexValue = IndexValue(pageId, rowId)
+            indexValues.records.remove(indexValue)
+            if (indexValues.records.isEmpty()) {
+                page.delete(result.index, result.keyValue)
+            } else {
+                page.update(result.index, KeyValue(key, indexValues.toBytes()))
+            }
         }
     }
 
     fun get(record: IndexRecord) = get(record.key)
     fun put(record: IndexRecord) = put(record.key, record.value)
-    fun delete(record: IndexRecord) = delete(record.key)
+    fun delete(record: IndexRecord, pageId: Int, rowId: Int) = delete(record.key, pageId, rowId)
 
     fun split(pageManager: IndexPageManager): IndexLogicalPage {
         return pageManager.split(page)

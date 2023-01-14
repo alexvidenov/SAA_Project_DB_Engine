@@ -35,34 +35,43 @@ class SchemaExecutor constructor(ctx: Context) {
             QueryType.DropTable -> {
 
             }
-            QueryType.ListTables -> TODO()
-            QueryType.TableInfo -> TODO()
+            QueryType.ListTables -> {
+
+            }
+            QueryType.TableInfo -> {
+
+            }
             QueryType.Insert -> {
-                handleInsert(query.table, query.fields, query.inserts)
+                tableService.insertRows(query.table, query.fields, query.inserts)
             }
             QueryType.Select -> {
-                handleSelect(
+                val res = handleGeneralCrudOperation(
                     query.table,
                     query.fields,
                     query.whereFields,
                     query.operations,
-                    query.currentCond
+                    query.currentCond, tableService::select
                 )
+                // emit in flow
             }
-            QueryType.Update -> TODO()
+            QueryType.Update -> {
+
+            }
             QueryType.Delete -> {
-                handleDelete(
+                handleGeneralCrudOperation(
                     query.table,
                     query.fields,
                     query.whereFields,
                     query.operations,
-                    query.currentCond
+                    query.currentCond, tableService::delete
                 )
             }
             QueryType.CreateIndex -> {
                 tableService.createIndex(query.table, query.indexName, query.fields.first())
             }
-            QueryType.DropIndex -> TODO()
+            QueryType.DropIndex -> {
+
+            }
         }
     }
 
@@ -71,56 +80,28 @@ class SchemaExecutor constructor(ctx: Context) {
         tableService.createTable(tableName, schema)
     }
 
-    private fun handleInsert(
-        tableName: String,
-        fields: MutableList<String>,
-        inserts: MutableList<MutableList<String>>
-    ) {
-        tableService.insertRows(tableName, fields, inserts)
-    }
-
-    private fun handleSelect(
+    private fun <T> handleGeneralCrudOperation(
         tableName: String,
         fields: MutableList<String>,
         whereFields: MutableList<String>,
         conditions: MutableList<WhereClauseType.LogicalOperation>,
-        currentCond: WhereClauseType.Condition? = null
-    ) {
-        val res: SelectResultModel = if (conditions.isEmpty() && currentCond != null) {
-            tableService.select(
+        currentCond: WhereClauseType.Condition? = null,
+        handler: (
+            tableName: String,
+            fields: List<String>,
+            whereFields: List<String>,
+            clauseType: WhereClause
+        ) -> T
+    ): T {
+        return if (conditions.isEmpty() && currentCond != null) {
+            handler(
                 tableName,
                 fields,
                 whereFields,
                 WhereClause.SingleCondition(currentCond)
             )
         } else {
-            tableService.select(
-                tableName,
-                fields,
-                whereFields,
-                WhereClause.LogicalOperations(conditions)
-            )
-        }
-        Log.d("TEST", "HANDLE SELECT RES: $res")
-    }
-
-    private fun handleDelete(
-        tableName: String,
-        fields: MutableList<String>,
-        whereFields: MutableList<String>,
-        conditions: MutableList<WhereClauseType.LogicalOperation>,
-        currentCond: WhereClauseType.Condition? = null
-    ) {
-        Log.d("TEST", "delete")
-        if (conditions.isEmpty() && currentCond != null) {
-            tableService.delete(
-                tableName,
-                fields,
-                whereFields,
-                WhereClause.SingleCondition(currentCond)
-            )
-        } else {
-            tableService.delete(
+            handler(
                 tableName,
                 fields,
                 whereFields,

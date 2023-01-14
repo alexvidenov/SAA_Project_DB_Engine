@@ -18,7 +18,6 @@ class TableService constructor(ctx: Context) {
     val files: List<String>
         get() = dir.listFiles()?.filter { !it.isDirectory }?.map { it.name }!!
 
-
     fun load(tableName: String) {
         loadTable(tableName)
         loadIndex(tableName)
@@ -86,6 +85,8 @@ class TableService constructor(ctx: Context) {
         clauseType: WhereClause,
     ) {
         load(tableName)
+        val data = managerPool[tableName]!!
+        data.indexes
         // extract this as well
         val cbks = mutableListOf<() -> Unit>()
         val handler = QueryTypeHandler(handler = DeleteHandler(), persistCbk = {

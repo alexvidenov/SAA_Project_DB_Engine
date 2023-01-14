@@ -12,6 +12,10 @@ import com.example.saa_project_db_engine.db.storage.models.TableRow
 class HeapPageManager constructor(override val fileManager: HeapFileManager) :
     PageManager<TableRow, HeapPageData, HeapLogicalPage>(fileManager) {
 
+    init {
+        get(fileManager.lastPageId) // pre-warms last page since it's very likely to be used
+    }
+
     override fun allocateNewLogicalPage(
         page: HeapLogicalPage,
         records: MutableList<TableRow>

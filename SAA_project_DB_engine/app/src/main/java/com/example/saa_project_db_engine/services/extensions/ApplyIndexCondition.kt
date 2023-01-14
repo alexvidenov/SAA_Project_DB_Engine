@@ -8,6 +8,7 @@ import com.example.saa_project_db_engine.parsers.models.Operator
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
+import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import java.nio.ByteBuffer
 
 fun TableService.applyBoundedIndexScanCondition(
@@ -17,8 +18,10 @@ fun TableService.applyBoundedIndexScanCondition(
 ): IndexValues? {
     val data = managerPool[operandName]!!
     val indexData = data.indexes[operandName]!!
+    IndexConsistencyService.addAffectedFieldEntry() // add the operandName and the index record
     val records = indexData.tree.scan(lower, upper)
-    return sequenceToIndexRecords(records)
+    records.toList() // use
+    return sequenceToIndexValues(records)
 }
 
 fun TableService.applyIndexCondition(
@@ -47,6 +50,7 @@ fun TableService.applyIndexCondition(
     val indexRecord = IndexRecord(record.toByteBuffer(), ByteBuffer.allocate(0))
     val tree = indexData.tree
 
+    // have lateinit res here and update the global consistency with it
     return when (condition.operator) {
         Operator.Eq -> {
             val res = tree.get(indexRecord)
@@ -55,28 +59,38 @@ fun TableService.applyIndexCondition(
             }
             null
         }
-        Operator.Ne -> null
+        Operator.Ne -> {
+            // full index scan with a filter.. kms
+            val res = tree.get(indexRecord)
+            val filtered = tree.scan().filter {
+                if (res != null) {
+                    it.key === res.key
+                }
+                true
+            }
+            sequenceToIndexValues(filtered)
+        }
         Operator.Gt -> {
             val res = tree.scan(startKey = record.toByteBuffer())
-            sequenceToIndexRecords(res)
+            sequenceToIndexValues(res)
         }
         Operator.Lt -> {
             val res = tree.scan(endKey = record.toByteBuffer())
-            sequenceToIndexRecords(res)
+            sequenceToIndexValues(res)
         }
         Operator.Gte -> {
             val res = tree.scan(startKey = record.toByteBuffer())
-            sequenceToIndexRecords(res)
+            sequenceToIndexValues(res)
         }
         Operator.Lte -> {
             val res = tree.scan(endKey = record.toByteBuffer())
-            sequenceToIndexRecords(res)
+            sequenceToIndexValues(res)
         }
         else -> null
     }
 }
 
-private fun sequenceToIndexRecords(records: Sequence<IndexRecord>): IndexValues? {
+private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? {
     val indexValuesReturn = mutableListOf<IndexValue>()
     records.forEach {
         val indexValues = IndexValues.fromBytes(it.value)

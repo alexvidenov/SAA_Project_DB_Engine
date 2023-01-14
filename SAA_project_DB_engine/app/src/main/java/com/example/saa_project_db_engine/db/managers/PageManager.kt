@@ -50,7 +50,10 @@ abstract class PageManager<B : WithByteUtils, D : PageData<B>, P : LogicalPage<B
     }
 
     fun move(page: P, range: IntRange): P {
-        val records = range.map { page.delete(range.first) }.toMutableList()
+        val records = range.map {
+            val record = page.records[it]
+            page.delete(it, record)
+        }.toMutableList()
         return allocateNewLogicalPage(page, records)
     }
 

@@ -34,15 +34,15 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
         }
     }
 
-    private fun delete(key: ByteBuffer) {
+    private fun delete(key: ByteBuffer, pageId: Int, rowId: Int) {
         val result = findLeafNode(key)
-        result.leafNode.delete(key)
+        result.leafNode.delete(key, pageId, rowId)
         result.leafNode.commit(pageManager)
     }
 
     fun get(record: IndexRecord) = get(record.key)
     fun put(record: IndexRecord) = put(record.key, record.value)
-    fun delete(record: IndexRecord) = delete(record.key)
+    fun delete(record: IndexRecord, pageId: Int, rowId: Int) = delete(record.key, pageId, rowId)
 
     fun scan(
         startKey: ByteBuffer? = logicalMinimumKey,
