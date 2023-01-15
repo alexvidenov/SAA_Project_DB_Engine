@@ -99,6 +99,8 @@ data class Query(
     var operations: MutableList<WhereClauseType.LogicalOperation> = mutableListOf(),
     var currentSubExprOperations: MutableList<WhereClauseType.LogicalOperation>? = null,
     var isParsingSubExpr: Boolean = false,
+    var orderByField: String = "",
+    var distinct: Boolean = false,
     var err: String? = null
 )
 

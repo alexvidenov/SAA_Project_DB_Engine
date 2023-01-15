@@ -17,6 +17,7 @@ enum class ParseStateStep {
     CreateIndexOpeningParenthesis,
     CreateIndexFieldName,
     CreateIndexClosingParenthesis,
+    SelectDistinct,
     SelectField,
     SelectFrom,
     SelectComma,
@@ -41,6 +42,7 @@ enum class ParseStateStep {
     WhereField,
     WhereOperator,
     WhereValue,
+    WhereOrderByField,
     DropTableName,
     DropIndexTableName,
     DropIndexIndexName,
@@ -92,6 +94,11 @@ class StatementParser {
                         "Select" -> {
                             state.query.type = QueryType.Select
                             state.pop()
+                            val optionalDistinct = state.peek()
+                            if (optionalDistinct == "DISTINCT") {
+                                state.step = ParseStateStep.SelectDistinct
+                                continue
+                            }
                             state.step = ParseStateStep.SelectField
                         }
                         "Insert INTO" -> {
@@ -112,6 +119,15 @@ class StatementParser {
                         }
                         else -> {}
                     }
+                }
+                ParseStateStep.SelectDistinct -> {
+                    val distinct = state.peek()
+                    if (distinct != "DISTINCT") {
+
+                    }
+                    state.query.distinct = true
+                    state.pop()
+                    state.step = ParseStateStep.SelectField
                 }
                 ParseStateStep.SelectField -> {
                     val identifier = state.peek()
@@ -375,10 +391,20 @@ class StatementParser {
                                 state.step = ParseStateStep.WhereField
                             }
                         }
+                        "ORDER BY" -> {
+                            state.step = ParseStateStep.WhereOrderByField
+                            state.pop()
+                        }
                         else -> {
+                            state.step = ParseStateStep.WhereField
                             state.pop()
                         }
                     }
+                }
+                ParseStateStep.WhereOrderByField -> {
+                    val field = state.peek()
+                    state.query.orderByField = field
+                    state.pop()
                 }
                 ParseStateStep.CreateTableName -> {
                     val table = state.peek()
