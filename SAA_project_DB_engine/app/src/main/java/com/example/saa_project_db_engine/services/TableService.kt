@@ -8,6 +8,10 @@ import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.extensions.*
+import com.example.saa_project_db_engine.services.handlers.DeleteHandler
+import com.example.saa_project_db_engine.services.handlers.QueryTypeHandler
+import com.example.saa_project_db_engine.services.handlers.SelectHandler
+import com.example.saa_project_db_engine.services.handlers.SelectOpts
 import com.example.saa_project_db_engine.services.models.*
 import java.io.File
 
@@ -68,7 +72,7 @@ class TableService constructor(ctx: Context) {
             val indexes = indexScan(tableName, clauseType)
             if (indexes != null) {
                 Log.d("TEST", "fetchHeapResultsFromIndexValues")
-                fetchHeapResultsFromIndexValues(tableName, fields, indexes, handler)
+                fetchHeapResultsFromIndexValues(tableName, indexes, handler)
             } else {
                 Log.d("TEST", "INDEXES ARE NULL")
             }
@@ -106,15 +110,18 @@ class TableService constructor(ctx: Context) {
         fields: List<String>,
         whereFields: List<String>,
         clauseType: WhereClause,
+        orderByField: String,
+        distinct: Boolean
     ): SelectResultModel {
         load(tableName)
         val data = managerPool[tableName]!!
-        val selectHandler = SelectHandler(fields, data.tableSchema)
+        val opts = SelectOpts(orderByField, distinct)
+        val selectHandler = SelectHandler(fields, opts, data.tableSchema)
         val handler =
             QueryTypeHandler(handler = selectHandler, persistCbk = {})
         whereClauseWithHandlers(tableName, fields, whereFields, clauseType, handler)
+        selectHandler.cleanup()
         return selectHandler.res
     }
-
 
 }

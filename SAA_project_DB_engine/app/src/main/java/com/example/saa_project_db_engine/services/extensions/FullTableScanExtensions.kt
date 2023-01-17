@@ -4,8 +4,8 @@ import android.util.Log
 import com.example.saa_project_db_engine.db.managers.page.forEachRowPageIndexed
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
-import com.example.saa_project_db_engine.services.models.QueryTypeHandler
-import com.example.saa_project_db_engine.services.models.SelectHandler
+import com.example.saa_project_db_engine.services.handlers.QueryTypeHandler
+import com.example.saa_project_db_engine.services.handlers.SelectHandler
 import com.example.saa_project_db_engine.services.models.WhereClause
 
 fun TableService.fullTableScan(

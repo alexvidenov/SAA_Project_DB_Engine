@@ -55,7 +55,6 @@ class StatementParser {
     fun parseQuery(sql: String): Query {
         state = ParseStmtState(0, sql, ParseStateStep.Type, Query(), "")
         while (true) {
-            Log.d("TEST", "STEP: ${state.step}")
             if (state.pos >= state.sql.length) {
                 return state.query
             }

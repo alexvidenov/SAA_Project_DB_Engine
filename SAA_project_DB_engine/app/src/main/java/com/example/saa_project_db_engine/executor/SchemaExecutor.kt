@@ -11,12 +11,18 @@ import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.extensions.*
 import com.example.saa_project_db_engine.services.models.WhereClause
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class SchemaExecutor constructor(ctx: Context) {
     private val tableService = TableService(ctx)
     private val parser = StatementParser()
 
-    // flows here to emit UI data
+    private val _state: MutableStateFlow<List<List<String>>> = MutableStateFlow(
+        mutableListOf()
+    )
+    val state: StateFlow<List<List<String>>>
+        get() = _state
 
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
@@ -51,10 +57,21 @@ class SchemaExecutor constructor(ctx: Context) {
                     query.fields,
                     query.whereFields,
                     query.operations,
-                    query.currentCond, tableService::select
-                )
-                Log.d("TEST", "RESULT FROM SELECT: $res")
-                // emit in flow
+                    query.currentCond
+                ) { tableName,
+                    fields,
+                    whereFields,
+                    clauseType ->
+                    tableService.select(
+                        tableName,
+                        fields,
+                        whereFields,
+                        clauseType,
+                        query.orderByField,
+                        query.distinct
+                    )
+                }
+                _state.value = res.values
             }
             QueryType.Update -> {
 

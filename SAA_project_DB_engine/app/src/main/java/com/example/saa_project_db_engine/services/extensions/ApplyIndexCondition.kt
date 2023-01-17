@@ -63,7 +63,7 @@ fun TableService.applyIndexCondition(
             val res = tree.get(indexRecord)
             val filtered = tree.scan().filter {
                 if (res != null) {
-                    return@filter it.key == res.key
+                    return@filter it.key != res.key
                 }
                 return@filter true
             }

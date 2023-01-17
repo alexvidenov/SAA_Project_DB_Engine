@@ -1,22 +1,61 @@
 package com.example.saa_project_db_engine.ui
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
 import com.example.saa_project_db_engine.executor.SchemaExecutor
-import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
+import de.codecrafters.tableview.TableView
+import de.codecrafters.tableview.toolkit.SimpleTableDataAdapter
+import kotlinx.coroutines.launch
+
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var tableView: TableView<Array<String>>
+    private lateinit var queryEditText: EditText
+    private lateinit var executeBtn: Button
+
+    private lateinit var executor: SchemaExecutor
+
+    private fun observeQueryResults() {
+        lifecycleScope.launch {
+            executor.state.collect {
+                val array = it.map {
+                    it.toTypedArray()
+                }.toTypedArray()
+                updateUI(array)
+            }
+        }
+    }
+
+    private fun observeExecuteButton() {
+        executeBtn.setOnClickListener {
+            executor.execute(queryEditText.text.toString())
+        }
+    }
+
+    private fun updateUI(arr: Array<Array<String>>) {
+        tableView.dataAdapter = SimpleTableDataAdapter(this, arr)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         SchemasServiceLocator.ctx = this
+        executor = SchemaExecutor(this)
+
+        tableView = findViewById(R.id.queryResultsTable)
+        queryEditText = findViewById(R.id.queryInput)
+        executeBtn = findViewById(R.id.executeBtn)
+
+        observeQueryResults()
+        observeExecuteButton()
 
         testCreate()
+
 
 //
 //        testSchema2.put("email", "testEmail2")
@@ -92,40 +131,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun testCreate() {
-        val executor = SchemaExecutor(this)
-        val parser = StatementParser()
-        val query =
-            parser.parseQuery(
-                "Select DISTINCT Name FROM Sample WHERE (Name == 'PETKAN' AND Name == 'IVAN') ORDER BY Id"
-            )
-        Log.d(
-            "TEST", "QUERY: $query"
-        )
+//        val parser = StatementParser()
+//        val query =
+//            parser.parseQuery(
+//                "Select DISTINCT Name FROM Sample WHERE (Name == 'PETKAN' AND Name == 'IVAN') ORDER BY Id"
+//            )
+//        Log.d(
+//            "TEST", "QUERY: $query"
+//        )
 
-//        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
-//
-//        executor.execute("CreateIndex SampleId ON Sample (Name)")
-//
-////        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
-//
-//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
-//
+        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
+
+        executor.execute("CreateIndex SampleId ON Sample (Name)")
+
+//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+
+//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
+
 //        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
-//
+
 //        executor.execute("Select Id FROM Sample WHERE NOT Name == 'IVAN'")
 
 //        executor.execute("TableInfo Sample")
