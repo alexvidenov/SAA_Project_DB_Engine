@@ -23,6 +23,10 @@ fun ByteBuffer.toAvroBytesSize(): Int {
 
 fun ByteBuffer.toHexString() = toByteArray().toHexString()
 
+fun UInt.toAvroBytesSize(): Int {
+    val bytes = ByteArray(5)
+    return BinaryData.encodeInt(this.toInt(), bytes, 0)
+}
 
 fun Int.toAvroBytesSize(): Int {
     val bytes = ByteArray(5)
@@ -43,3 +47,5 @@ fun String.safeCapitalize(): String {
         ) else it.toString()
     }
 }
+
+fun UByte.toBigEndianUInt(): UInt = this.toUInt() shl 24
