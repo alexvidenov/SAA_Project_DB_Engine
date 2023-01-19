@@ -17,7 +17,6 @@ fun TableService.fetchHeapResultsFromIndexValues(
     }
 }
 
-// assuming the index stays consistent. (which it does, for now)
 fun TableService.fetchRowFromIndexValue(
     tableName: String,
     index: IndexValue,

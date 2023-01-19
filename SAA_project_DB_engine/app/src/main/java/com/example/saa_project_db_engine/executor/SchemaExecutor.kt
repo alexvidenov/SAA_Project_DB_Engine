@@ -12,6 +12,7 @@ import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.extensions.*
 import com.example.saa_project_db_engine.services.models.WhereClause
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -24,6 +25,9 @@ class SchemaExecutor constructor(ctx: Context) {
     )
     val state: StateFlow<SelectResultModel>
         get() = _state
+
+    // here emit all the "Updated 56 rows. Deleted 56 rwos, etc".
+//    private val _events = MutableSharedFlow<>()
 
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
@@ -75,7 +79,24 @@ class SchemaExecutor constructor(ctx: Context) {
                 _state.value = res
             }
             QueryType.Update -> {
-
+                handleGeneralCrudOperation(
+                    query.table,
+                    query.fields,
+                    query.whereFields,
+                    query.operations,
+                    query.currentCond
+                ) { tableName,
+                    fields,
+                    whereFields,
+                    clauseType ->
+                    tableService.update(
+                        tableName,
+                        fields,
+                        whereFields,
+                        clauseType,
+                        query.updates
+                    )
+                }
             }
             QueryType.Delete -> {
                 handleGeneralCrudOperation(
