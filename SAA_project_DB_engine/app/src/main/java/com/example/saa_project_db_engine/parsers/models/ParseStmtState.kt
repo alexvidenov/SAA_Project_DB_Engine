@@ -21,7 +21,7 @@ data class ParseStmtState(
     var sql: String,
     var step: ParseStateStep,
     var query: Query,
-    val nextUpdateField: String,
+    var currentUpdateField: String,
     val isSubExpression: Boolean = false,
     var err: String? = null
 ) {

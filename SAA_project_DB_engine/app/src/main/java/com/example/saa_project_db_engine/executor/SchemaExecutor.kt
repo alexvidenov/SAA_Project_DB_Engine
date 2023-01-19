@@ -2,6 +2,7 @@ package com.example.saa_project_db_engine.executor
 
 import android.content.Context
 import android.util.Log
+import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.parsers.models.FieldSchemaDefinition
 import com.example.saa_project_db_engine.parsers.models.Query
@@ -18,10 +19,10 @@ class SchemaExecutor constructor(ctx: Context) {
     private val tableService = TableService(ctx)
     private val parser = StatementParser()
 
-    private val _state: MutableStateFlow<List<List<String>>> = MutableStateFlow(
-        mutableListOf()
+    private val _state: MutableStateFlow<SelectResultModel> = MutableStateFlow(
+        SelectResultModel()
     )
-    val state: StateFlow<List<List<String>>>
+    val state: StateFlow<SelectResultModel>
         get() = _state
 
     fun execute(raw: String) {
@@ -71,7 +72,7 @@ class SchemaExecutor constructor(ctx: Context) {
                         query.distinct
                     )
                 }
-                _state.value = res.values
+                _state.value = res
             }
             QueryType.Update -> {
 

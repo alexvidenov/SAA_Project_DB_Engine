@@ -8,10 +8,7 @@ import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.extensions.*
-import com.example.saa_project_db_engine.services.handlers.DeleteHandler
-import com.example.saa_project_db_engine.services.handlers.QueryTypeHandler
-import com.example.saa_project_db_engine.services.handlers.SelectHandler
-import com.example.saa_project_db_engine.services.handlers.SelectOpts
+import com.example.saa_project_db_engine.services.handlers.*
 import com.example.saa_project_db_engine.services.models.*
 import java.io.File
 
@@ -57,7 +54,14 @@ class TableService constructor(ctx: Context) {
             val buf = record.toByteBuffer()
             tableRows.add(TableRow(buf))
         }
-        data.heapPageManager.insertRows(tableRows)
+
+        val rows = mutableListOf<RowWithPageId>()
+
+        data.heapPageManager.insertRows(tableRows) { row, pageId ->
+            rows.add(RowWithPageId(row, pageId))
+        }
+
+        applyConsistencyOnInsert(tableName, rows)
     }
 
     private fun whereClauseWithHandlers(
@@ -82,17 +86,15 @@ class TableService constructor(ctx: Context) {
         }
     }
 
-    fun delete(
-        tableName: String,
-        fields: List<String>,
-        whereFields: List<String>,
-        clauseType: WhereClause,
+    fun update(
+        tableName: String, fields: List<String>, whereFields: List<String>,
+        clauseType: WhereClause, updates: Map<String, String>,
     ) {
         load(tableName)
         val data = managerPool[tableName]!!
-        // extract this as well
         val cbks = mutableListOf<() -> Unit>()
-        val handler = QueryTypeHandler(handler = DeleteHandler(data.indexes), persistCbk = {
+        val updateHandler = UpdateHandler(data.tableSchema, updates)
+        val handler = QueryTypeHandler(handler = updateHandler, persistCbk = {
             it?.let {
                 Log.d("TEST", "callback")
                 cbks.add(it)
@@ -102,6 +104,31 @@ class TableService constructor(ctx: Context) {
         cbks.forEach {
             it.invoke()
         }
+        applyConsistencyOnUpdate(tableName, updateHandler.oldNewPairList)
+        handler.handler.cleanup()
+    }
+
+    fun delete(
+        tableName: String,
+        fields: List<String>,
+        whereFields: List<String>,
+        clauseType: WhereClause,
+    ) {
+        load(tableName)
+        // extract this as well
+        val cbks = mutableListOf<() -> Unit>()
+        val deleteHandler = DeleteHandler()
+        val handler = QueryTypeHandler(handler = deleteHandler, persistCbk = {
+            it?.let {
+                Log.d("TEST", "callback")
+                cbks.add(it)
+            }
+        })
+        whereClauseWithHandlers(tableName, fields, whereFields, clauseType, handler)
+        cbks.forEach {
+            it.invoke()
+        }
+        applyConsistencyOnDelete(tableName, deleteHandler.rows)
         handler.handler.cleanup()
     }
 

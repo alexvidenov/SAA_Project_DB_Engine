@@ -8,6 +8,8 @@ import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
+import com.example.saa_project_db_engine.services.extensions.RowWithPageId
+import com.example.saa_project_db_engine.services.extensions.convertOperandToNativeType
 import com.example.saa_project_db_engine.services.models.IndexData
 import org.apache.avro.Schema
 import java.nio.ByteBuffer
@@ -53,7 +55,8 @@ class SelectHandler constructor(
 
     private val distinctSetMap: MutableMap<String, MutableSet<Comparable<Any>>> = mutableMapOf()
 
-    private val distinctRes: MutableMap<Comparable<Any>, MutableList<Comparable<Any>>> =
+    // extract type aliases
+    private val distinctRes: MutableMap<Pair<String, Comparable<Any>>, MutableList<Pair<String, Comparable<Any>>>> =
         mutableMapOf()
 
     private val rows: MutableList<GenericRecord> = mutableListOf()
@@ -84,7 +87,7 @@ class SelectHandler constructor(
             Log.d("TEST", "FIELD2: $field")
             array.add(field.toString())
         }
-        if (opts.orderByField != "") {
+        if (opts.orderByField != "" && !opts.distinct) {
             var fieldValue = record.get(opts.orderByField)
             if (fieldValue is org.apache.avro.util.Utf8) {
                 fieldValue = fieldValue.toString()
@@ -96,33 +99,38 @@ class SelectHandler constructor(
     }
 
     override fun cleanup() {
-        if (sortModel.isNotEmpty()) {
-            com.example.saa_project_db_engine.algos.quickSort(sortModel, 0, sortModel.size - 1)
-            uiModel = sortModel.map {
-                it.second
+        if (distinctSetMap.isNotEmpty() && sortModel.isNotEmpty()) {
+            val sortModel: SelectResArray = mutableListOf()
+            distinctRes.forEach {
+                var fieldValue: Any
+                val array = mutableListOf<String>()
+                array.add(it.key.second.toString())
+                fieldValue = if (it.key.first == opts.orderByField) {
+                    it.key.second
+                } else {
+                    it.value.first { it.first == opts.orderByField }.second
+                }
+                if (fieldValue is org.apache.avro.util.Utf8) {
+                    fieldValue = fieldValue.toString()
+                }
+                it.value.forEach {
+                    array.add(it.second.toString())
+                }
+                sortModel.add(Pair(fieldValue!! as Comparable<Any>, array)) // trust me, bro
+            }
+            orderByHandler(sortModel)
+        } else if (sortModel.isNotEmpty()) {
+            orderByHandler(sortModel)
+        } else if (distinctSetMap.isNotEmpty()) {
+            uiModel = distinctRes.map {
+                val array = mutableListOf<String>()
+                array.add(it.key.second.toString())
+                array.addAll(it.value.map {
+                    it.second.toString()
+                })
+                array
             }.toMutableList()
         }
-    }
-
-    private fun distinctHandler() {
-        var max = 0
-        var fieldWithMostDistinct = ""
-        distinctSetMap.entries.forEach {
-            val size = it.value.size
-            if (size > max) {
-                max = size
-            }
-            fieldWithMostDistinct = it.key
-        }
-        rows.forEach { record ->
-            val value = record.get(fieldWithMostDistinct)
-            val list = mutableListOf<Comparable<Any>>()
-            fields.forEach {
-                list.add(record.get(it) as Comparable<Any>)
-            }
-            distinctRes[value as Comparable<Any>] = list
-        }
-
     }
 
     private fun orderByHandler(sortModel: SelectResArray) {
@@ -133,27 +141,37 @@ class SelectHandler constructor(
     }
 }
 
-// pass update values here
-class UpdateHandler() : QueryTypeHandlerOnSelect {
-    // pass update specifics to the class in constructor
+data class OldNewPair(val old: RowWithPageId, val new: RowWithPageId)
+
+class UpdateHandler(private val schema: Schema, private val updates: Map<String, String>) :
+    QueryTypeHandlerOnSelect {
+    val oldNewPairList = mutableListOf<OldNewPair>()
+
     override fun handle(
         manager: HeapPageManager,
         page: HeapLogicalPage,
         index: Int,
         row: TableRow
     ) {
-        val newVal = row // TODO: update new fields, create new Generic record
-        page.update(index, newVal)
+        val record =
+            GenericRecord(schema)
+        record.load(row.value)
+        updates.forEach {
+            record.put(it.key, convertOperandToNativeType(it.value, it.key, record))
+        }
+        val newRow = TableRow(record.toByteBuffer(), row.rowId)
+        oldNewPairList.add(OldNewPair(RowWithPageId(row, page.id), RowWithPageId(newRow, page.id)))
+        page.update(index, newRow) // TODO: handle overflow
     }
 
     override fun cleanup() {
-        // update index
     }
 
 }
 
-class DeleteHandler constructor(private val indexes: Map<String, IndexData>) :
+class DeleteHandler constructor() :
     QueryTypeHandlerOnSelect {
+    val rows = mutableListOf<RowWithPageId>()
 
     override fun handle(
         manager: HeapPageManager,
@@ -162,33 +180,12 @@ class DeleteHandler constructor(private val indexes: Map<String, IndexData>) :
         row: TableRow
     ) {
         Log.d("DELETE", "deleting row: ${row.rowId}")
+        rows.add(RowWithPageId(row, page.id))
         page.delete(index, row)
         manager.recordsCount--
     }
 
     override fun cleanup() {
-        IndexConsistencyService.affectedFieldsMap.entries.forEach {
-            val key = it.key
-            val value = it.value
-            val index = indexes[key]
-            if (index != null) {
-                val tree = index.tree
-                value.forEach { pair ->
-                    val record =
-                        GenericRecord(index.indexSchema)
-                    record.load(pair.first)
-                    pair.second.records.forEach { idxVal ->
-                        Log.d("TEST", "KEY TO DELETE: ${record}")
-                        Log.d("TEST", "IDXVAL: ${idxVal}")
-                        tree.delete(
-                            IndexRecord(pair.first, ByteBuffer.allocate(0)),
-                            idxVal.pageId,
-                            idxVal.rowId
-                        ) // first is the value of the index (Generic record with Ivan)
-                    }
-                }
-            }
-        }
     }
 
 }

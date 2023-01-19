@@ -1,43 +1,48 @@
 package com.example.saa_project_db_engine.ui
 
 import android.os.Bundle
-import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
 import com.example.saa_project_db_engine.executor.SchemaExecutor
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
+import com.google.android.material.textfield.TextInputLayout
 import de.codecrafters.tableview.TableView
 import de.codecrafters.tableview.toolkit.SimpleTableDataAdapter
+import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter
 import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tableView: TableView<Array<String>>
     private lateinit var queryEditText: EditText
-    private lateinit var executeBtn: Button
+    private lateinit var textInputLayout: TextInputLayout
 
     private lateinit var executor: SchemaExecutor
+
+    private val ROW_ID = "RowId"
 
     private fun observeQueryResults() {
         lifecycleScope.launch {
             executor.state.collect {
-                val array = it.map {
+                val record = it.values
+                val res = record.map {
                     it.toTypedArray()
                 }.toTypedArray()
-                updateUI(array)
+                updateTableView(res, ROW_ID, *it.fields.toTypedArray())
             }
         }
     }
 
     private fun observeExecuteButton() {
-        executeBtn.setOnClickListener {
+        textInputLayout.setEndIconOnClickListener {
             executor.execute(queryEditText.text.toString())
         }
     }
 
-    private fun updateUI(arr: Array<Array<String>>) {
+    private fun updateTableView(arr: Array<Array<String>>, vararg headers: String) {
+        tableView.headerAdapter = SimpleTableHeaderAdapter(this, *headers)
         tableView.dataAdapter = SimpleTableDataAdapter(this, arr)
     }
 
@@ -48,13 +53,13 @@ class MainActivity : AppCompatActivity() {
         executor = SchemaExecutor(this)
 
         tableView = findViewById(R.id.queryResultsTable)
-        queryEditText = findViewById(R.id.queryInput)
-        executeBtn = findViewById(R.id.executeBtn)
+        textInputLayout = findViewById(R.id.queryInputLayout)
+        queryEditText = findViewById(R.id.queryInputEditText)
 
         observeQueryResults()
         observeExecuteButton()
 
-        testCreate()
+//        testCreate()
 
 
 //

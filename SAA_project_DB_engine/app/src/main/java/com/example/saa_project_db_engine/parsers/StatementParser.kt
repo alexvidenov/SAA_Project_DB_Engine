@@ -109,7 +109,7 @@ class StatementParser {
                             state.query.type = QueryType.Update
                             state.pop()
                             state.query.updates = mutableMapOf()
-                            state.step = ParseStateStep.UpdateField
+                            state.step = ParseStateStep.UpdateTable
                         }
                         "Delete FROM" -> {
                             state.query.type = QueryType.Delete
@@ -247,12 +247,60 @@ class StatementParser {
                     state.pop()
                     state.step = ParseStateStep.InsertValuesOpeningParentheses
                 }
-                ParseStateStep.UpdateTable -> TODO()
-                ParseStateStep.UpdateSet -> TODO()
-                ParseStateStep.UpdateField -> TODO()
-                ParseStateStep.UpdateEquals -> TODO()
-                ParseStateStep.UpdateValue -> TODO()
-                ParseStateStep.UpdateComma -> TODO()
+                ParseStateStep.UpdateTable -> {
+                    val tableName = state.peek()
+                    state.query.table = tableName
+                    state.pop()
+                    state.step = ParseStateStep.UpdateSet
+                }
+                ParseStateStep.UpdateSet -> {
+                    val setWord = state.peek()
+                    if (setWord != "SET") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.UpdateField
+                }
+                ParseStateStep.UpdateField -> {
+                    val identifier = state.peek()
+                    if (!state.isIdentifier(identifier)) {
+
+                    }
+                    state.currentUpdateField = identifier
+                    state.pop()
+                    state.step = ParseStateStep.UpdateEquals
+                }
+                ParseStateStep.UpdateEquals -> {
+                    val equalsWord = state.peek()
+                    if (equalsWord != "=") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.UpdateValue
+                }
+                ParseStateStep.UpdateValue -> {
+                    val quoted = state.peekQuotedStringWithLength()
+                    if (quoted.length == 0) {
+
+                    }
+                    state.query.updates[state.currentUpdateField] = quoted.content
+                    state.currentUpdateField = ""
+                    state.pop()
+                    val maybeWhereWord = state.peek()
+                    if (maybeWhereWord == "WHERE") {
+                        state.step = ParseStateStep.Where
+                        continue
+                    }
+                    state.step = ParseStateStep.UpdateComma
+                }
+                ParseStateStep.UpdateComma -> {
+                    val commaWord = state.peek()
+                    if (commaWord != ",") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.UpdateField
+                }
                 ParseStateStep.DeleteFromTable -> {
                     val table = state.peek()
                     state.query.table = table

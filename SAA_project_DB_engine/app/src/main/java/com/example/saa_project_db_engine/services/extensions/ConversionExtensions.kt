@@ -1,10 +1,9 @@
 package com.example.saa_project_db_engine.services.extensions
 
 import com.example.saa_project_db_engine.serialization.GenericRecord
-import com.example.saa_project_db_engine.services.TableService
 import org.apache.avro.Schema
 
-fun TableService.convertOperandToNativeType(
+fun convertOperandToNativeType(
     value: String,
     operand: String,
     record: GenericRecord
@@ -15,7 +14,7 @@ fun TableService.convertOperandToNativeType(
     )
 }
 
-fun TableService.convertStringToNativeType(value: String, type: Schema.Type): Any {
+fun convertStringToNativeType(value: String, type: Schema.Type): Any {
     return when (type) {
         Schema.Type.STRING -> {
             value

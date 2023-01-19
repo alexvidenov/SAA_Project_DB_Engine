@@ -30,10 +30,6 @@ fun TableService.fullTableScan(
             val manager = data.heapPageManager
             val page = manager.get(pageId)
             if (page != null) {
-//                IndexConsistencyService.addAffectedFieldEntry(
-//                    leftPair.first.name,
-//                    Pair(leftPair.first.recordKey, indexValues)
-//                )
                 queryHandler.handler.handle(
                     manager,
                     page,

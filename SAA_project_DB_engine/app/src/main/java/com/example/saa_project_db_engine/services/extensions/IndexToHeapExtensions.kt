@@ -30,7 +30,6 @@ fun TableService.fetchRowFromIndexValue(
     val recordIndex = page!!.getIndexForRowId(index.rowId)
     val old = page.records[recordIndex!!]
 
-    // TODO pass heapManager to manipulate "total entries" count
     queryHandler.handler.handle(heapManager, page, recordIndex, old)
 
     // extract general?

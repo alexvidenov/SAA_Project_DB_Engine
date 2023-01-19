@@ -33,6 +33,7 @@ android {
 }
 
 dependencies {
+    def nav_version = "2.3.0"
 
     // generic binary serializer
     implementation group: 'org.apache.avro', name: 'avro-android', version: '1.11.0'

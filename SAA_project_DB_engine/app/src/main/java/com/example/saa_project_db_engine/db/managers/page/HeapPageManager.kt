@@ -3,6 +3,7 @@ package com.example.saa_project_db_engine.db.managers.page
 import android.util.Log
 import com.example.saa_project_db_engine.ROOT_PAGE_ID
 import com.example.saa_project_db_engine.db.NullPersistenceModelException
+import com.example.saa_project_db_engine.db.PageFullException
 import com.example.saa_project_db_engine.db.managers.PageManager
 import com.example.saa_project_db_engine.db.managers.file.HeapFileManager
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
@@ -40,17 +41,26 @@ class HeapPageManager constructor(override val fileManager: HeapFileManager) :
         commit(lastPage)
     }
 
-    fun insertRows(rows: List<TableRow>) {
+    // callback with each row and its corresponding page id and row id
+    fun insertRows(rows: List<TableRow>, rowPersistedCbk: (row: TableRow, pageId: Int) -> Unit) {
         Log.d("TEST", "last page id: ${fileManager.lastPageId}")
         val lastPage = get(fileManager.lastPageId)
+        var curPageToInsert = lastPage
         rows.forEach {
             fileManager.entriesCount++
             val newRowId = fileManager.nextRowId
             it.rowId = newRowId
             Log.d("TEST", "next row id: ${fileManager.nextRowId}")
             fileManager.nextRowId++
-            val resultantIndex = lastPage?.insert(it)
-            lastPage?.addRowToRowOffsetArray(newRowId, resultantIndex!!)
+            var resultantIndex: Int?
+            try {
+                resultantIndex = curPageToInsert?.insert(it)
+            } catch (exc: PageFullException) {
+                curPageToInsert = split(lastPage!!)
+                resultantIndex = curPageToInsert?.insert(it)
+            }
+            curPageToInsert?.addRowToRowOffsetArray(newRowId, resultantIndex!!)
+            rowPersistedCbk(it, curPageToInsert?.id!!)
         }
         commit(lastPage)
     }

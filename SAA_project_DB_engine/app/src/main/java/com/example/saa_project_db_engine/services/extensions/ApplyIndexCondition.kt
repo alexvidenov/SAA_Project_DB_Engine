@@ -8,9 +8,7 @@ import com.example.saa_project_db_engine.parsers.models.Operator
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
-import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import java.nio.ByteBuffer
-import kotlin.math.log
 
 fun TableService.applyBoundedIndexScanCondition(
     operandName: String,
