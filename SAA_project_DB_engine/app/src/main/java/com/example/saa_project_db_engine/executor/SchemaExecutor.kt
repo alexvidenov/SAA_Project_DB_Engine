@@ -11,8 +11,8 @@ import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.extensions.*
+import com.example.saa_project_db_engine.services.models.TableInfo
 import com.example.saa_project_db_engine.services.models.WhereClause
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,6 +26,9 @@ class SchemaExecutor constructor(ctx: Context) {
     val state: StateFlow<SelectResultModel>
         get() = _state
 
+    private var currentTables: List<String> = mutableListOf()
+    private var currentTableInfo: TableInfo? = null
+
     // here emit all the "Updated 56 rows. Deleted 56 rwos, etc".
 //    private val _events = MutableSharedFlow<>()
 
@@ -34,6 +37,16 @@ class SchemaExecutor constructor(ctx: Context) {
         Log.d("TEST", "PARSED QUERY: $parsed")
         IndexConsistencyService.clear()
         executeInternal(parsed)
+    }
+
+    fun getTables(): List<String> {
+        execute("ListTables")
+        return currentTables
+    }
+
+    fun getTableInfo(tableName: String): TableInfo {
+        execute("TableInfo ${tableName}")
+        return currentTableInfo!!
     }
 
     private fun executeInternal(query: Query) {
@@ -46,12 +59,12 @@ class SchemaExecutor constructor(ctx: Context) {
                 tableService.dropTable(query.table)
             }
             QueryType.ListTables -> {
-                val tables = tableService.listTables()
-                Log.d("TEST", "tables :$tables")
+                currentTables = tableService.listTables()
+                Log.d("TEST", "tables :$currentTables")
             }
             QueryType.TableInfo -> {
-                val tableInfo = tableService.getTableInfo(query.table)
-                Log.d("TEST", "TABLE INFO: $tableInfo")
+                currentTableInfo = tableService.getTableInfo(query.table)
+                Log.d("TEST", "TABLE INFO: $currentTableInfo")
             }
             QueryType.Insert -> {
                 tableService.insertRows(query.table, query.fields, query.inserts)

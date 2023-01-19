@@ -9,12 +9,12 @@ fun TableService.getTableInfo(tableName: String): TableInfo {
     load(tableName)
     val data = managerPool[tableName]!!
 
-    val heapSize = File(dir, "$tableName.db").totalSpace
+    val heapSize = (File(dir, "$tableName.db").length() / 1024).toDouble()
 
-    var indexesSize: Long = 0
+    var indexesSize = 0.0
 
     getIndexFilesForTable(tableName).forEach {
-        indexesSize += it.totalSpace
+        indexesSize += it.length()
     }
 
     val schemaEntries = mutableListOf<TableSchemaEntry>()
@@ -25,5 +25,5 @@ fun TableService.getTableInfo(tableName: String): TableInfo {
 
     val recordsCount = data.heapPageManager.recordsCount
 
-    return TableInfo(heapSize, indexesSize, recordsCount, schemaEntries)
+    return TableInfo(heapSize, indexesSize / 1024, recordsCount, schemaEntries)
 }

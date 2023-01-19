@@ -7,17 +7,20 @@ import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
 import com.example.saa_project_db_engine.executor.SchemaExecutor
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
+import com.example.saa_project_db_engine.services.models.TableInfo
+import com.example.saa_project_db_engine.ui.models.TableUIModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputLayout
 import de.codecrafters.tableview.TableView
 import de.codecrafters.tableview.toolkit.SimpleTableDataAdapter
 import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter
 import kotlinx.coroutines.launch
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var tableView: TableView<Array<String>>
     private lateinit var queryEditText: EditText
     private lateinit var textInputLayout: TextInputLayout
+    private lateinit var fab: FloatingActionButton
 
     private lateinit var executor: SchemaExecutor
 
@@ -41,9 +44,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeFabClicked() {
+        fab.setOnClickListener {
+            showTableListSheet()
+        }
+    }
+
     private fun updateTableView(arr: Array<Array<String>>, vararg headers: String) {
         tableView.headerAdapter = SimpleTableHeaderAdapter(this, *headers)
         tableView.dataAdapter = SimpleTableDataAdapter(this, arr)
+    }
+
+    private fun showTableListSheet() {
+        TableListBottomSheet({
+            executor.getTables().map {
+                TableUIModel(it)
+            }
+        }) {
+            executor.getTableInfo(it)
+        }.also {
+            it.show(supportFragmentManager, TableListBottomSheet.TAG)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,8 +77,11 @@ class MainActivity : AppCompatActivity() {
         textInputLayout = findViewById(R.id.queryInputLayout)
         queryEditText = findViewById(R.id.queryInputEditText)
 
+        fab = findViewById(R.id.fab)
+
         observeQueryResults()
         observeExecuteButton()
+        observeFabClicked()
 
 //        testCreate()
 
