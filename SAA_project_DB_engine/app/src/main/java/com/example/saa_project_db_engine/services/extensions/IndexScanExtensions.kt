@@ -8,7 +8,6 @@ import com.example.saa_project_db_engine.parsers.models.Operator
 import com.example.saa_project_db_engine.parsers.models.WhereClauseType
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.TableService
-import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.models.WhereClause
 import java.nio.ByteBuffer
 
@@ -91,10 +90,8 @@ fun TableService.logicalAndIndexHandler(
     leftCond: WhereClauseType.Condition?,
     rightCond: WhereClauseType.Condition?
 ): IndexValues? {
-    val leftPair = applyIndexCondition(tableName, leftCond!!)
-    val rightPair = applyIndexCondition(tableName, rightCond!!)
-    val leftRes = leftPair.second
-    val rightRes = rightPair.second
+    val leftRes = applyIndexCondition(tableName, leftCond!!)
+    val rightRes = applyIndexCondition(tableName, rightCond!!)
     Log.d("TEST", "leftRes.records: ${leftRes?.records}")
     Log.d("TEST", "rightRes.records: ${rightRes?.records}")
     return if (leftRes != null && rightRes != null) {
@@ -107,14 +104,6 @@ fun TableService.logicalAndIndexHandler(
         }
         Log.d("TEST", "filtered: ${filteredRecords}")
         val indexValues = IndexValues(filteredRecords)
-        IndexConsistencyService.addAffectedFieldEntry(
-            leftPair.first.name,
-            Pair(leftPair.first.recordKey, indexValues)
-        )
-        IndexConsistencyService.addAffectedFieldEntry(
-            rightPair.first.name,
-            Pair(rightPair.first.recordKey, indexValues)
-        )
         indexValues
     } else null
 }
@@ -124,10 +113,8 @@ fun TableService.logicalOrIndexHandler(
     leftCond: WhereClauseType.Condition?,
     rightCond: WhereClauseType.Condition?
 ): IndexValues? {
-    val indexScanLeftNodePair = applyIndexCondition(tableName, leftCond!!)
-    val indexScanRightNodePair = applyIndexCondition(tableName, rightCond!!)
-    val indexScanLeftNodeRes = indexScanLeftNodePair.second
-    val indexScanRightNodeRes = indexScanRightNodePair.second
+    val indexScanLeftNodeRes = applyIndexCondition(tableName, leftCond!!)
+    val indexScanRightNodeRes = applyIndexCondition(tableName, rightCond!!)
     val filteredRecords = mutableListOf<IndexValue>()
     indexScanLeftNodeRes?.records?.forEach {
         filteredRecords.add(it)
@@ -138,26 +125,9 @@ fun TableService.logicalOrIndexHandler(
     if (filteredRecords.isEmpty()) {
         return null
     }
-    val indexValues = IndexValues(filteredRecords)
-    IndexConsistencyService.addAffectedFieldEntry(
-        indexScanLeftNodePair.first.name,
-        Pair(indexScanLeftNodePair.first.recordKey, indexValues)
-    )
-    IndexConsistencyService.addAffectedFieldEntry(
-        indexScanRightNodePair.first.name,
-        Pair(indexScanRightNodePair.first.recordKey, indexValues)
-    )
-    return indexValues
+    return IndexValues(filteredRecords)
 }
 
 fun TableService.singleCond(tableName: String, cond: WhereClauseType.Condition): IndexValues? {
-    val res = applyIndexCondition(tableName, cond)
-    val indexValues = res.second
-    if (indexValues != null) {
-        IndexConsistencyService.addAffectedFieldEntry(
-            res.first.name,
-            Pair(res.first.recordKey, indexValues)
-        )
-    }
-    return res.second
+    return applyIndexCondition(tableName, cond)
 }

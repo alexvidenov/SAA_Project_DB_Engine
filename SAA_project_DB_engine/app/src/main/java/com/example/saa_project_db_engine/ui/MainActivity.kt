@@ -1,6 +1,7 @@
 package com.example.saa_project_db_engine.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
                 val res = record.map {
                     it.toTypedArray()
                 }.toTypedArray()
+                Log.d("TEST", "UPDATING TABLEVIEW: ${it}")
                 updateTableView(res, ROW_ID, *it.fields.toTypedArray())
             }
         }
@@ -83,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         observeExecuteButton()
         observeFabClicked()
 
-//        testCreate()
+        testCreate()
 
 
 //
@@ -181,19 +183,21 @@ class MainActivity : AppCompatActivity() {
 
         executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
 
+        executor.execute("CreateIndex SampleId ON Sample (Name)")
+
         executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
 
         executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
-
-        executor.execute("CreateIndex SampleId ON Sample (Name)")
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
 
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+
 //        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
 
-//        executor.execute("Select Id FROM Sample WHERE NOT Name == 'IVAN'")
+//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
 //        executor.execute("TableInfo Sample")
 

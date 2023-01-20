@@ -7,7 +7,6 @@ import com.example.saa_project_db_engine.db.models.SelectResultModel
 import com.example.saa_project_db_engine.db.storage.models.HeapLogicalPage
 import com.example.saa_project_db_engine.db.storage.models.TableRow
 import com.example.saa_project_db_engine.serialization.GenericRecord
-import com.example.saa_project_db_engine.services.consistency.IndexConsistencyService
 import com.example.saa_project_db_engine.services.extensions.RowWithPageId
 import com.example.saa_project_db_engine.services.extensions.convertOperandToNativeType
 import com.example.saa_project_db_engine.services.models.IndexData
@@ -62,8 +61,11 @@ class SelectHandler constructor(
     private val rows: MutableList<GenericRecord> = mutableListOf()
 
     init {
-        fields.forEach {
-            distinctSetMap[it] = mutableSetOf()
+        Log.d("TEST", "OPTS ARE: $opts")
+        if (opts.distinct) {
+            fields.forEach {
+                distinctSetMap[it] = mutableSetOf()
+            }
         }
     }
 
@@ -94,12 +96,17 @@ class SelectHandler constructor(
             }
             sortModel.add(Pair(fieldValue!! as Comparable<Any>, array)) // trust me, bro
         } else {
+            Log.d("TEST", "ADDING TO UIMODEL")
             uiModel.add(array)
         }
     }
 
     override fun cleanup() {
         if (distinctSetMap.isNotEmpty() && sortModel.isNotEmpty()) {
+            Log.d(
+                "TEST",
+                "distinctSetMap.isNotEmpty() && sortModel.isNotEmpty(): ${distinctSetMap} ${sortModel}"
+            )
             val sortModel: SelectResArray = mutableListOf()
             distinctRes.forEach {
                 var fieldValue: Any
@@ -120,8 +127,10 @@ class SelectHandler constructor(
             }
             orderByHandler(sortModel)
         } else if (sortModel.isNotEmpty()) {
+            Log.d("TEST", "sortModel.isNotEmpty(): $sortModel")
             orderByHandler(sortModel)
         } else if (distinctSetMap.isNotEmpty()) {
+            Log.d("TEST", "distinctSetMap.isNotEmpty(): $distinctSetMap")
             uiModel = distinctRes.map {
                 val array = mutableListOf<String>()
                 array.add(it.key.second.toString())

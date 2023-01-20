@@ -26,7 +26,7 @@ data class IndexRecordAndIndexName(val name: String, val recordKey: ByteBuffer)
 fun TableService.applyIndexCondition(
     tableName: String,
     condition: WhereClauseType.Condition
-): Pair<IndexRecordAndIndexName, IndexValues?> {
+): IndexValues? {
     val data = managerPool[tableName]!!
     val operand1 = condition.operand1
     val operand2 = condition.operand2
@@ -94,10 +94,7 @@ fun TableService.applyIndexCondition(
 //        ) // IndexValues(records=[IndexValue(pageId=0, rowId=0), IndexValue(pageId=0, rowId=1), IndexValue(pageId=0, rowId=3), IndexValue(pageId=0, rowId=5)])
 //    }
     Log.d("TEST", "NOPE")
-    return Pair(
-        IndexRecordAndIndexName(operand1, record.toByteBuffer()),
-        sequenceToIndexValues(records)
-    )
+    return sequenceToIndexValues(records)
 }
 
 private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? {

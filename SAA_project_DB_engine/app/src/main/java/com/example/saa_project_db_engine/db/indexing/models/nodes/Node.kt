@@ -92,6 +92,7 @@ abstract class Node constructor(
         }
     }
 
+    // TODO: instead of directly passing pageid and rowId, refactor to use IndexValue struct
     fun delete(key: ByteBuffer, pageId: Int, rowId: Int) {
         val result = find(key)
         if (result is FindResult.ExactMatch) {
