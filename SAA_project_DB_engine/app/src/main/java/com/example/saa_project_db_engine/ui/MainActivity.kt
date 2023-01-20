@@ -188,9 +188,9 @@ class MainActivity : AppCompatActivity() {
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
 
-//        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
         executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
 

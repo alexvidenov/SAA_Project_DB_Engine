@@ -250,6 +250,7 @@ class StatementParser {
                 ParseStateStep.UpdateTable -> {
                     val tableName = state.peek()
                     state.query.table = tableName
+                    Log.d("TEST", "UpdateTable: ${tableName}")
                     state.pop()
                     state.step = ParseStateStep.UpdateSet
                 }
@@ -259,6 +260,7 @@ class StatementParser {
 
                     }
                     state.pop()
+                    Log.d("TEST", "UpdateSet: SET")
                     state.step = ParseStateStep.UpdateField
                 }
                 ParseStateStep.UpdateField -> {
@@ -268,6 +270,7 @@ class StatementParser {
                     }
                     state.currentUpdateField = identifier
                     state.pop()
+                    Log.d("TEST", "UpdateField: ${identifier}")
                     state.step = ParseStateStep.UpdateEquals
                 }
                 ParseStateStep.UpdateEquals -> {
@@ -275,11 +278,13 @@ class StatementParser {
                     if (equalsWord != "=") {
 
                     }
+                    Log.d("TEST", "UpdateEquals: ${equalsWord}")
                     state.pop()
                     state.step = ParseStateStep.UpdateValue
                 }
                 ParseStateStep.UpdateValue -> {
                     val quoted = state.peekQuotedStringWithLength()
+                    Log.d("TEST", "UpdateValue: ${quoted}")
                     if (quoted.length == 0) {
 
                     }
@@ -287,12 +292,12 @@ class StatementParser {
                     state.currentUpdateField = ""
                     state.pop()
                     val maybeWhereWord = state.peek()
+                    Log.d("TEST", "UpdateValue: maybeWhereWord: ${maybeWhereWord}")
                     if (maybeWhereWord == "WHERE") {
+                        Log.d("TEST", "UpdateValue: maybeWhereWord: WHERE")
                         state.step = ParseStateStep.Where
-                        state.pop()
                         continue
                     }
-                    state.pop()
                     state.step = ParseStateStep.UpdateComma
                 }
                 ParseStateStep.UpdateComma -> {
@@ -300,6 +305,7 @@ class StatementParser {
                     if (commaWord != ",") {
 
                     }
+                    Log.d("TEST", "UpdateComma: commaWord: ${commaWord}")
                     state.pop()
                     state.step = ParseStateStep.UpdateField
                 }
