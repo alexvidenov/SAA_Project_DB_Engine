@@ -46,7 +46,9 @@ class SelectHandler constructor(
 ) :
     QueryTypeHandlerOnSelect {
     val res: SelectResultModel
-        get() = SelectResultModel(fields, uiModel)
+        get() = SelectResultModel(uiTableHeaderModel, uiModel)
+
+    private var uiTableHeaderModel = mutableListOf<String>()
 
     private var uiModel: MutableList<MutableList<String>> = mutableListOf()
 
@@ -66,7 +68,10 @@ class SelectHandler constructor(
             fields.forEach {
                 distinctSetMap[it] = mutableSetOf()
             }
+        } else {
+            uiTableHeaderModel.add("RowId")
         }
+        uiTableHeaderModel.addAll(fields)
     }
 
     override fun handle(
@@ -108,6 +113,7 @@ class SelectHandler constructor(
                 "distinctSetMap.isNotEmpty() && sortModel.isNotEmpty(): ${distinctSetMap} ${sortModel}"
             )
             val sortModel: SelectResArray = mutableListOf()
+            distinctSetMapToDistinctRes()
             distinctRes.forEach {
                 var fieldValue: Any
                 val array = mutableListOf<String>()
@@ -130,10 +136,12 @@ class SelectHandler constructor(
             Log.d("TEST", "sortModel.isNotEmpty(): $sortModel")
             orderByHandler(sortModel)
         } else if (distinctSetMap.isNotEmpty()) {
-            Log.d("TEST", "distinctSetMap.isNotEmpty(): $distinctSetMap")
+            distinctSetMapToDistinctRes()
+            Log.d("TEST", "distinctSetMap.isNotEmpty(): $distinctRes")
+
             uiModel = distinctRes.map {
                 val array = mutableListOf<String>()
-                array.add(it.key.second.toString())
+//                array.add(it.key.second.toString())
                 array.addAll(it.value.map {
                     it.second.toString()
                 })
@@ -147,6 +155,26 @@ class SelectHandler constructor(
         uiModel = sortModel.map {
             it.second
         }.toMutableList()
+    }
+
+    private fun distinctSetMapToDistinctRes() {
+        var max = 0
+        var fieldWithMostDistinct = ""
+        distinctSetMap.entries.forEach {
+            val size = it.value.size
+            if (size > max) {
+                max = size
+            }
+            fieldWithMostDistinct = it.key
+        }
+        rows.forEach { record ->
+            val value = record.get(fieldWithMostDistinct) as Comparable<Any>
+            val list = mutableListOf<Pair<String, Comparable<Any>>>()
+            fields.forEach {
+                list.add(Pair(it, record.get(it) as Comparable<Any>))
+            }
+            distinctRes[Pair(fieldWithMostDistinct, value)] = list
+        }
     }
 }
 
@@ -178,7 +206,7 @@ class UpdateHandler(private val schema: Schema, private val updates: Map<String,
 
 }
 
-class DeleteHandler constructor() :
+class DeleteHandler :
     QueryTypeHandlerOnSelect {
     val rows = mutableListOf<RowWithPageId>()
 

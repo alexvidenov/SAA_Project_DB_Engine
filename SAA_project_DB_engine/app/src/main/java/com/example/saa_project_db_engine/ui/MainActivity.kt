@@ -8,7 +8,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
 import com.example.saa_project_db_engine.executor.SchemaExecutor
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
-import com.example.saa_project_db_engine.services.models.TableInfo
 import com.example.saa_project_db_engine.ui.models.TableUIModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputLayout
@@ -29,13 +28,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeQueryResults() {
         lifecycleScope.launch {
-            executor.state.collect {
-                val record = it.values
-                val res = record.map {
+            executor.state.collect { resModel ->
+                val record = resModel.values
+                val mapped = record.map {
                     it.toTypedArray()
                 }.toTypedArray()
-                Log.d("TEST", "UPDATING TABLEVIEW: ${it}")
-                updateTableView(res, ROW_ID, *it.fields.toTypedArray())
+                Log.d("TEST", "UPDATING TABLEVIEW: ${mapped}")
+                updateTableView(mapped, *resModel.fields.toTypedArray())
             }
         }
     }
@@ -193,7 +192,8 @@ class MainActivity : AppCompatActivity() {
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022'")
+
 
 //        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
 
