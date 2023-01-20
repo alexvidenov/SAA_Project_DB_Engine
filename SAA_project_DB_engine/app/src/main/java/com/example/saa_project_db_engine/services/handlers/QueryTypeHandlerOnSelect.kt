@@ -107,7 +107,7 @@ class SelectHandler constructor(
     }
 
     override fun cleanup() {
-        if (distinctSetMap.isNotEmpty() && sortModel.isNotEmpty()) {
+        if (distinctSetMap.isNotEmpty() && opts.orderByField != "") {
             Log.d(
                 "TEST",
                 "distinctSetMap.isNotEmpty() && sortModel.isNotEmpty(): ${distinctSetMap} ${sortModel}"
@@ -117,7 +117,7 @@ class SelectHandler constructor(
             distinctRes.forEach {
                 var fieldValue: Any
                 val array = mutableListOf<String>()
-                array.add(it.key.second.toString())
+//                array.add(it.key.second.toString())
                 fieldValue = if (it.key.first == opts.orderByField) {
                     it.key.second
                 } else {

@@ -192,7 +192,7 @@ class MainActivity : AppCompatActivity() {
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
 
-        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022'")
+        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 
 
 //        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
