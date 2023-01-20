@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 data class KeyValue(val key: ByteBuffer, val value: ByteBuffer) : SchemaAware(),
     IndexedRecord,
     WithByteUtils {
-    private val crc: UInt
+    val crc: UInt
         get() = CRC32().let {
             it.update(key.toByteArray().asUByteArray())
             it.update(value.toByteArray().asUByteArray())
@@ -30,14 +30,7 @@ data class KeyValue(val key: ByteBuffer, val value: ByteBuffer) : SchemaAware(),
             record.load(bytes)
             val key = record.get("key") as ByteBuffer
             val value = record.get("value") as ByteBuffer
-            val crc32 = CRC32()
-            crc32.update(key.toByteArray().asUByteArray())
-            crc32.update(value.toByteArray().asUByteArray())
-            val crc = record.get("crc") as UInt
-            if (crc32.value == crc) {
-                return KeyValue(key, value)
-            }
-            throw CRC32CheckFailedException("")
+            return KeyValue(key, value)
         }
     }
 
@@ -52,7 +45,7 @@ data class KeyValue(val key: ByteBuffer, val value: ByteBuffer) : SchemaAware(),
         return when (i) {
             0 -> this.key
             1 -> this.value
-            2 -> this.crc
+            2 -> this.crc.toInt()
             else -> {}
         }
     }

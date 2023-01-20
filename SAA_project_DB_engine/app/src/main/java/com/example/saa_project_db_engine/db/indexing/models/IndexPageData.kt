@@ -1,5 +1,7 @@
 package com.example.saa_project_db_engine.db.indexing.models
 
+import android.util.Log
+import com.example.saa_project_db_engine.db.CRC32CheckFailedException
 import com.example.saa_project_db_engine.db.base.PageData
 import com.example.saa_project_db_engine.db.indexing.models.nodes.NodeType
 import com.example.saa_project_db_engine.serialization.GenericRecord
@@ -28,13 +30,19 @@ data class IndexPageData(
             if (nodeTypeString is org.apache.avro.util.Utf8) { // guaranteed
                 nodeTypeString = nodeTypeString.toString()
             }
+            // CRC checks here
             val nodeType = NodeType.fromString(nodeTypeString as String)
             val records = record.get("records") as MutableList<*>
             val mapped = records.map {
                 val indexedRecord = it as IndexedRecord
-                val row =
+                val crc = indexedRecord.get(2) as Int
+                val keyValue =
                     KeyValue(indexedRecord.get(0) as ByteBuffer, indexedRecord.get(1) as ByteBuffer)
-                row
+                if (crc.toUInt() != keyValue.crc) {
+                    Log.d("TEST", "CRC CHECK FAILED: ${crc.toUInt()} ${keyValue.crc}")
+                    throw CRC32CheckFailedException("")
+                }
+                keyValue
             }.toMutableList()
             return IndexPageData(
                 id,

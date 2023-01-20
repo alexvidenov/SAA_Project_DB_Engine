@@ -1,5 +1,6 @@
 package com.example.saa_project_db_engine.db.storage.models
 
+import android.util.Log
 import com.example.saa_project_db_engine.algos.CRC32
 import com.example.saa_project_db_engine.db.CRC32CheckFailedException
 import com.example.saa_project_db_engine.db.base.SchemaAware
@@ -14,7 +15,7 @@ import java.nio.ByteBuffer
 
 data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware(), IndexedRecord,
     WithByteUtils {
-    private val crc: UInt
+    val crc: UInt
         get() = CRC32().let {
             it.update(value.toByteArray().asUByteArray())
             it.value
@@ -28,13 +29,7 @@ data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware()
             record.load(bytes)
             val rowId = record.get("rowId") as Int
             val value = record.get("value") as ByteBuffer
-            val crc32 = CRC32()
-            crc32.update(value.toByteArray().asUByteArray())
-            val stored = record.get("crc") as UInt
-            if (crc32.value == stored) {
-                return TableRow(value, rowId)
-            }
-            throw CRC32CheckFailedException("")
+            return TableRow(value, rowId)
         }
     }
 
@@ -58,6 +53,7 @@ data class TableRow(var value: ByteBuffer, var rowId: Int? = -1) : SchemaAware()
         return when (i) {
             0 -> this.rowId!!
             1 -> this.value
+            2 -> this.crc.toInt()
             else -> {}
         }
     }

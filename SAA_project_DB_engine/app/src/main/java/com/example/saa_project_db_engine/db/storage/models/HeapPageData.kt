@@ -1,10 +1,13 @@
 package com.example.saa_project_db_engine.db.storage.models
 
+import android.util.Log
+import com.example.saa_project_db_engine.db.CRC32CheckFailedException
 import com.example.saa_project_db_engine.db.base.PageData
 import com.example.saa_project_db_engine.serialization.GenericRecord
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import org.apache.avro.generic.IndexedRecord
 import java.nio.ByteBuffer
+import kotlin.math.log
 
 data class HeapPageData(
     override var id: Int,
@@ -25,7 +28,12 @@ data class HeapPageData(
             val records = record.get("records") as MutableList<*>
             val mappedRecords = records.map {
                 val indexedRecord = it as IndexedRecord
+                val crc = indexedRecord.get(2) as Int
                 val row = TableRow(indexedRecord.get(1) as ByteBuffer, indexedRecord.get(0) as Int)
+                if (crc.toUInt() != row.crc) {
+                    Log.d("TEST", "CRC CHECK FAILED: ${crc.toUInt()} ${row.crc}")
+                    throw CRC32CheckFailedException("")
+                }
                 row
             }.toMutableList()
             val rowOffsetArray = record.get("offsetArray") as MutableList<*>

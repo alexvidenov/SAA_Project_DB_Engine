@@ -170,28 +170,36 @@ class MainActivity : AppCompatActivity() {
 //            "TEST", "QUERY: $query"
 //        )
 
-        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+//        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+//
+//        executor.execute("CreateIndex SampleId ON Sample (Name)")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+//
+//        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+//        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
 
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
-
-        executor.execute("CreateIndex SampleId ON Sample (Name)")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
-
-        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
+        executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
 
+//        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
+//
         executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 
 

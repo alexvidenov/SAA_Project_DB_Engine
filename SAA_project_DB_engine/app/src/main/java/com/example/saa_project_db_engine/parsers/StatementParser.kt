@@ -289,8 +289,10 @@ class StatementParser {
                     val maybeWhereWord = state.peek()
                     if (maybeWhereWord == "WHERE") {
                         state.step = ParseStateStep.Where
+                        state.pop()
                         continue
                     }
+                    state.pop()
                     state.step = ParseStateStep.UpdateComma
                 }
                 ParseStateStep.UpdateComma -> {

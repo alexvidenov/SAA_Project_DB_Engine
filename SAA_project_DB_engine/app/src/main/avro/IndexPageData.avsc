@@ -33,6 +33,10 @@
             {
               "name": "value",
               "type": "bytes"
+            },
+            {
+              "name": "crc",
+              "type": "int"
             }
           ]
         }
