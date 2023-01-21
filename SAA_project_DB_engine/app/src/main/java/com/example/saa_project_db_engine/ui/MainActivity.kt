@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
 import com.example.saa_project_db_engine.executor.SchemaExecutor
+import com.example.saa_project_db_engine.parsers.StatementParser
 import com.example.saa_project_db_engine.services.SchemasServiceLocator
 import com.example.saa_project_db_engine.ui.models.TableUIModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -33,7 +34,6 @@ class MainActivity : AppCompatActivity() {
                 val mapped = record.map {
                     it.toTypedArray()
                 }.toTypedArray()
-                Log.d("TEST", "UPDATING TABLEVIEW: ${mapped}")
                 updateTableView(mapped, *resModel.fields.toTypedArray())
             }
         }
@@ -162,10 +162,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun testCreate() {
 //        val parser = StatementParser()
+//
 //        val query =
 //            parser.parseQuery(
-//                "Select DISTINCT Name FROM Sample WHERE (Name == 'PETKAN' AND Name == 'IVAN') ORDER BY Id"
+//                "Select Id FROM Sample WHERE (NOT Name == 'IVAN' AND Id == '3') AND Name != 'PETKAN'\n"
 //            )
+//
 //        Log.d(
 //            "TEST", "QUERY: $query"
 //        )
@@ -176,7 +178,7 @@ class MainActivity : AppCompatActivity() {
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
 //
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (3, 'DRAGAN')")
+//        executor.execute("Insert INTO Sample (Id, Name, BirthDate) VALUES (3, 'DRAGAN', '01.02.2022')")
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
 //
@@ -188,11 +190,13 @@ class MainActivity : AppCompatActivity() {
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 
-        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
+        executor.execute("Select Id, Name FROM Sample WHERE (NOT Name == 'IVAN' AND BirthDate == '01.01.2022') AND Name != 'PETKAN' ORDER BY Id")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+//        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
 
-        executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
+//        executor.execute("Select Id FROM Sample WHERE (NOT Name == 'IVAN' AND Id == '3')")
+
+//        executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
 
 //        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
@@ -200,7 +204,7 @@ class MainActivity : AppCompatActivity() {
 
 //        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 //
-        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
+//        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 
 
 //        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")

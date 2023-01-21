@@ -413,6 +413,7 @@ class StatementParser {
                                     state.query.operations[state.query.operations.size - 1]
                                 op.rightSubExpr = state.query.currentSubExprOperations
                                 state.query.operations[state.query.operations.size - 1] = op
+                                state.query.currentSubExprOperations = null
                             } else {
                                 val operation =
                                     state.query.operations[state.query.operations.size - 1]
@@ -600,8 +601,8 @@ class StatementParser {
                 state.query.currentSubExprOperations = mutableListOf()
                 val leftNode = state.query.currentCond
                 op.leftNode = leftNode
-                state.query.currentSubExprOperations!!.add(op)
             }
+            state.query.currentSubExprOperations!!.add(op)
         } else {
             if (state.query.operations.isEmpty()) {
                 if (state.query.currentSubExprOperations != null) { // subexpr performed
@@ -610,6 +611,15 @@ class StatementParser {
                 } else {
                     val leftNode = state.query.currentCond
                     op.leftNode = leftNode
+                }
+            }
+            else {
+                if (state.query.currentSubExprOperations != null) { // subexpr performed
+                    op.rightSubExpr = state.query.currentSubExprOperations
+                    state.query.currentSubExprOperations = null
+                } else {
+                    val rightNode = state.query.currentCond
+                    op.rightNode = rightNode
                 }
             }
             state.query.operations.add(op)
