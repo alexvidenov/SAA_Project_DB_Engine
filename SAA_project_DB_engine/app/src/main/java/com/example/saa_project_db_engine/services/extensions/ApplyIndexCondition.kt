@@ -79,17 +79,6 @@ fun TableService.applyIndexCondition(
         }
         else -> {}
     }
-//    records.forEach {
-//        val record2 =
-//            GenericRecord(schema)
-//        record2.load(it.key)
-//        val values = IndexValues.fromBytes(it.value)
-//        Log.d("TEST", "INDEX RECORD: $record") // {"Name": "IVAN"}
-//        Log.d(
-//            "TEST",
-//            "INDEX VALUE: ${values}"
-//        ) // IndexValues(records=[IndexValue(pageId=0, rowId=0), IndexValue(pageId=0, rowId=1), IndexValue(pageId=0, rowId=3), IndexValue(pageId=0, rowId=5)])
-//    }
     Log.d("TEST", "NOPE")
     return sequenceToIndexValues(records)
 }
@@ -99,7 +88,6 @@ private fun sequenceToIndexValues(records: Sequence<IndexRecord>): IndexValues? 
     records.forEach {
         if (it.value.capacity() != 0) { // in case scan actually performs full scan returning empty buffer
             val indexValues = IndexValues.fromBytes(it.value)
-            Log.d("TEST", "ADDING sequenceToIndexValues: ${indexValues}")
             indexValuesReturn.addAll(indexValues.records)
         }
     }

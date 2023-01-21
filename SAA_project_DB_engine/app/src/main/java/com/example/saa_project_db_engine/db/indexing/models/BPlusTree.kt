@@ -63,51 +63,51 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
             generateSequence(firstNode) { if (it == lastNode) null else createLeafNode(it.nextId) }
                 .flatMap { it.records }
                 .dropWhile {
-                    startKey != logicalMinimumKey && compare(
-                        it.key,
-                        startKey!!
-                    ) < 0
-                }
-                .takeWhile {
                     val compareHandler = {
                         val comp = {
                             compare(
                                 it.key,
-                                endKey!!
+                                startKey!!
                             )
                         }
-                        if (allowEqual) {
+                        if (!allowEqual) {
                             comp() <= 0
                         } else {
                             comp() < 0
                         }
                     }
-                    endKey == logicalMaximumKey || compareHandler()
+                    startKey != logicalMinimumKey && compareHandler()
+                }
+                .takeWhile {
+                    endKey == logicalMaximumKey || compare(
+                        it.key,
+                        endKey
+                    ) < 0
                 }
         } else {
             generateSequence(firstNode) { if (it == lastNode) null else createLeafNode(it.previousId) }
                 .flatMap { it.recordsReversed }
                 .dropWhile {
-                    startKey != logicalMaximumKey && compare(
-                        it.key,
-                        startKey
-                    ) > 0
-                }
-                .takeWhile {
                     val compareHandler = {
                         val comp = {
                             compare(
                                 it.key,
-                                endKey!!
+                                startKey!!
                             )
                         }
-                        if (allowEqual) {
+                        if (!allowEqual) {
                             comp() >= 0
                         } else {
                             comp() > 0
                         }
                     }
-                    endKey == logicalMinimumKey || compareHandler()
+                    startKey != logicalMaximumKey && compareHandler()
+                }
+                .takeWhile {
+                    endKey == logicalMinimumKey || compare(
+                        it.key,
+                        endKey!!
+                    ) > 0
                 }
         }
     }
