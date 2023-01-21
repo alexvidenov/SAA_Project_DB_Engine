@@ -35,10 +35,16 @@ fun TableService.parseSubExpression(
             }
             LogicalOperationParseResultEmpty.RIGHT -> {
                 val next = ops[i + 1]
+                Log.d("EXPR", "operation after i + 1: $next")
                 i += 2
-                val nextState = parseLogicalOperation(record, next)
+                val rightNode = next.rightNode!!.copy()
+                if (next.operator === LogicalOperator.NOT) {
+                    rightNode.operator = invertOperator(next.rightNode!!.operator)
+                }
+                val copied = next.copy(rightNode = rightNode)
+                val nextState = parseLogicalOperation(record, copied)
                 currentCachedOperationResult = applyOperation(
-                    currentCachedOperationResult,
+                    parseState.result, // currentCachedOperationResult
                     nextState.result,
                     currentOpType!!
                 )
@@ -86,6 +92,7 @@ fun TableService.parseLogicalOperation(
 }
 
 private fun applyOperation(op1: Boolean?, op2: Boolean?, operator: LogicalOperator): Boolean {
+    Log.d("EXPR", "applyOperation: ${op1} ${op2} ${operator}")
     return when (operator) {
         LogicalOperator.AND -> op1!! && op2!!
         LogicalOperator.OR -> op1!! || op2!!
@@ -93,7 +100,7 @@ private fun applyOperation(op1: Boolean?, op2: Boolean?, operator: LogicalOperat
     }
 }
 
-fun TableService.parseCondition(record: GenericRecord, cond: WhereClauseType.Condition): Boolean {
+fun parseCondition(record: GenericRecord, cond: WhereClauseType.Condition): Boolean {
     var op1: Any? = null
     var op2: Any? = null
     var typeToConvert: Schema.Type? = null

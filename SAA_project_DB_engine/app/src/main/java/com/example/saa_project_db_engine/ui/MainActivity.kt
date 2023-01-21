@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
 //
 //        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 
-        executor.execute("Select Id, Name FROM Sample WHERE (NOT Name == 'IVAN' AND BirthDate == '01.01.2022') AND Name != 'PETKAN' ORDER BY Id")
+        executor.execute("Select Id, Name FROM Sample WHERE Id < '4' AND NOT Name == 'IVAN'")
 
 //        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
 
