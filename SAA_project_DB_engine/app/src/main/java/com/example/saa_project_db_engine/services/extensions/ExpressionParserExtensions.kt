@@ -21,7 +21,7 @@ fun TableService.parseSubExpression(
         val parseState = parseLogicalOperation(record, op)
         Log.d("EXPR", "Empty state: ${parseState.empty}")
         when (parseState.empty) {
-            LogicalOperationParseResultEmpty.NONE -> { // only the init value in the logical foldr (from FP)
+            LogicalOperationParseResultEmpty.NONE -> { // only the init value in the logical foldl (from FP)
                 i++
                 currentCachedOperationResult = parseState.result
             }

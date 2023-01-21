@@ -28,8 +28,8 @@ class SchemaExecutor constructor(ctx: Context) {
     private var currentTables: List<String> = mutableListOf()
     private var currentTableInfo: TableInfo? = null
 
-    // here emit all the "Updated 56 rows. Deleted 56 rwos, etc".
-//    private val _events = MutableSharedFlow<>()
+    // here emit all the "Updated 56 rows. Deleted 56 rows, etc".
+    // private val _events = MutableSharedFlow<>()
 
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
@@ -83,7 +83,7 @@ class SchemaExecutor constructor(ctx: Context) {
                         fields,
                         whereFields,
                         clauseType,
-                        query.orderByField,
+                        query.orderByFields,
                         query.distinct
                     )
                 }

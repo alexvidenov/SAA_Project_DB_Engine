@@ -43,6 +43,7 @@ enum class ParseStateStep {
     WhereOperator,
     WhereValue,
     WhereOrderByField,
+    WhereOrderByComma,
     DropTableName,
     DropIndexTableName,
     DropIndexIndexName,
@@ -459,8 +460,17 @@ class StatementParser {
                 }
                 ParseStateStep.WhereOrderByField -> {
                     val field = state.peek()
-                    state.query.orderByField = field
+                    state.query.orderByFields.add(field)
                     state.pop()
+                    state.step = ParseStateStep.WhereOrderByComma
+                }
+                ParseStateStep.WhereOrderByComma -> {
+                    val commaWord = state.peek()
+                    if (commaWord != ",") {
+
+                    }
+                    state.pop()
+                    state.step = ParseStateStep.WhereOrderByField
                 }
                 ParseStateStep.CreateTableName -> {
                     val table = state.peek()
@@ -612,8 +622,7 @@ class StatementParser {
                     val leftNode = state.query.currentCond
                     op.leftNode = leftNode
                 }
-            }
-            else {
+            } else {
                 if (state.query.currentSubExprOperations != null) { // subexpr performed
                     op.rightSubExpr = state.query.currentSubExprOperations
                     state.query.currentSubExprOperations = null

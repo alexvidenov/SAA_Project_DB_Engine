@@ -137,12 +137,12 @@ class TableService constructor(ctx: Context) {
         fields: List<String>,
         whereFields: List<String>,
         clauseType: WhereClause,
-        orderByField: String,
+        orderByFields: List<String>,
         distinct: Boolean
     ): SelectResultModel {
         load(tableName)
         val data = managerPool[tableName]!!
-        val opts = SelectOpts(orderByField, distinct)
+        val opts = SelectOpts(orderByFields, distinct)
         val selectHandler = SelectHandler(fields, opts, data.tableSchema)
         val handler =
             QueryTypeHandler(handler = selectHandler, persistCbk = {})

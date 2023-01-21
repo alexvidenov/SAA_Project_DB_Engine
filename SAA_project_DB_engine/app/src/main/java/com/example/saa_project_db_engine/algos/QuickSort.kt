@@ -2,36 +2,46 @@ package com.example.saa_project_db_engine.algos
 
 import com.example.saa_project_db_engine.services.handlers.SelectResArray
 
-fun quickSort(array: SelectResArray, left: Int, right: Int) {
-    val index = partition(array, left, right)
-    if (left < index - 1) {
-        quickSort(array, left, index - 1)
-    }
-    if (index < right) {
-        quickSort(array, index, right)
-    }
+fun quickSort(arr: SelectResArray): SelectResArray {
+    sortArrayPart(arr, 0, arr.size - 1)
+    return arr
 }
 
-fun partition(array: SelectResArray, l: Int, r: Int): Int {
-    var left = l
-    var right = r
-    val pivot = array[(left + right) / 2].first
-    while (left <= right) {
-        while (array[left].first < pivot) left++
-
-        while (array[right].first > pivot) right--
-
-        if (left <= right) {
-            swapArrayElements(array, left, right)
-            left++
-            right--
+private fun partition(arr: SelectResArray, fromIndex: Int, toIndex: Int): Int {
+    val lastElementValue = arr[toIndex].first
+    var i = fromIndex - 1
+    for (j in fromIndex..toIndex - 1) {
+        val swapHandler = {
+            i++
+            swap(arr, i, j)
+        }
+        arr[j].first.forEachIndexed { idx, value ->
+            if (idx == arr[j].first.lastIndex) {
+                if (value <= lastElementValue[idx]) {
+                    swapHandler()
+                }
+            } else {
+                if (value < lastElementValue[idx]) { // try strict check until you get to the last index. Then
+                    swapHandler()
+                }
+            }
         }
     }
-    return left
+    swap(arr, i + 1, toIndex)
+    return i + 1
 }
 
-fun swapArrayElements(a: SelectResArray, b: Int, c: Int) {
-    val temp = a[b]
-    a[b] = a[c]
-    a[c] = temp
+private fun sortArrayPart(arr: SelectResArray, fromIndex: Int, toIndex: Int) {
+    if (fromIndex < toIndex) {
+        val middleIndex = partition(arr, fromIndex, toIndex)
+        sortArrayPart(arr, fromIndex, middleIndex - 1)
+        sortArrayPart(arr, middleIndex + 1, toIndex)
+    }
+}
+
+private fun swap(arr: SelectResArray, i: Int, j: Int): SelectResArray {
+    val tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
+    return arr
 }

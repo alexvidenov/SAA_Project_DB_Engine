@@ -23,9 +23,9 @@ data class QueryTypeHandler(
     val persistCbk: (cbk: (() -> Unit)?) -> Unit
 )
 
-data class SelectOpts(val orderByField: String, val distinct: Boolean)
+data class SelectOpts(val orderByFields: List<String>, val distinct: Boolean)
 
-typealias SelectResArray = MutableList<Pair<Comparable<Any>, MutableList<String>>>
+typealias SelectResArray = MutableList<Pair<List<Comparable<Any>>, MutableList<String>>>
 
 /* DISTINCT flow:
     on every table row fetched,
@@ -94,12 +94,16 @@ class SelectHandler constructor(
             Log.d("TEST", "FIELD2: $field")
             array.add(field.toString())
         }
-        if (opts.orderByField != "" && !opts.distinct) {
-            var fieldValue = record.get(opts.orderByField)
-            if (fieldValue is org.apache.avro.util.Utf8) {
-                fieldValue = fieldValue.toString()
+        if (opts.orderByFields.isNotEmpty() && !opts.distinct) {
+            val comparables = mutableListOf<Comparable<Any>>()
+            opts.orderByFields.forEach {
+                var fieldValue = record.get(it)
+                if (fieldValue is org.apache.avro.util.Utf8) {
+                    fieldValue = fieldValue.toString()
+                }
+                comparables.add(fieldValue as Comparable<Any>)  // trust me, bro
             }
-            sortModel.add(Pair(fieldValue!! as Comparable<Any>, array)) // trust me, bro
+            sortModel.add(Pair(comparables, array))
         } else {
             Log.d("TEST", "ADDING TO UIMODEL")
             uiModel.add(array)
@@ -107,29 +111,33 @@ class SelectHandler constructor(
     }
 
     override fun cleanup() {
-        if (distinctSetMap.isNotEmpty() && opts.orderByField != "") {
+        if (distinctSetMap.isNotEmpty() && opts.orderByFields.isNotEmpty()) {
             Log.d(
                 "TEST",
                 "distinctSetMap.isNotEmpty() && sortModel.isNotEmpty(): ${distinctSetMap} ${sortModel}"
             )
             val sortModel: SelectResArray = mutableListOf()
             distinctSetMapToDistinctRes()
-            distinctRes.forEach {
-                var fieldValue: Any
+            distinctRes.forEach { entry ->
                 val array = mutableListOf<String>()
-//                array.add(it.key.second.toString())
-                fieldValue = if (it.key.first == opts.orderByField) {
-                    it.key.second
-                } else {
-                    it.value.first { it.first == opts.orderByField }.second
+                val comparables = mutableListOf<Comparable<Any>>()
+                opts.orderByFields.forEach { field ->
+                    var fieldValue = if (entry.key.first == field) {
+                        entry.key.second
+                    } else {
+                        entry.value.first {
+                            it.first == field
+                        }.second
+                    }
+                    if (fieldValue is org.apache.avro.util.Utf8) {
+                        fieldValue = fieldValue.toString() as Comparable<Any>
+                    }
+                    comparables.add(fieldValue)
                 }
-                if (fieldValue is org.apache.avro.util.Utf8) {
-                    fieldValue = fieldValue.toString()
-                }
-                it.value.forEach {
+                entry.value.forEach {
                     array.add(it.second.toString())
                 }
-                sortModel.add(Pair(fieldValue!! as Comparable<Any>, array)) // trust me, bro
+                sortModel.add(Pair(comparables, array)) // trust me, bro
             }
             orderByHandler(sortModel)
         } else if (sortModel.isNotEmpty()) {
@@ -141,7 +149,6 @@ class SelectHandler constructor(
 
             uiModel = distinctRes.map {
                 val array = mutableListOf<String>()
-//                array.add(it.key.second.toString())
                 array.addAll(it.value.map {
                     it.second.toString()
                 })
@@ -151,8 +158,8 @@ class SelectHandler constructor(
     }
 
     private fun orderByHandler(sortModel: SelectResArray) {
-        com.example.saa_project_db_engine.algos.quickSort(sortModel, 0, sortModel.size - 1)
-        uiModel = sortModel.map {
+        val sorted = com.example.saa_project_db_engine.algos.quickSort(sortModel)
+        uiModel = sorted.map {
             it.second
         }.toMutableList()
     }
