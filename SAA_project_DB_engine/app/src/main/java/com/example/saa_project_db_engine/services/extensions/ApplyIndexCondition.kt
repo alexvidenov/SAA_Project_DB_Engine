@@ -21,8 +21,6 @@ fun TableService.applyBoundedIndexScanCondition(
     return sequenceToIndexValues(records)
 }
 
-data class IndexRecordAndIndexName(val name: String, val recordKey: ByteBuffer)
-
 fun TableService.applyIndexCondition(
     tableName: String,
     condition: WhereClauseType.Condition
@@ -65,7 +63,6 @@ fun TableService.applyIndexCondition(
                 }
                 return@filter true
             }
-            Log.d("TEST", "FILTERED: ${filtered.toMutableList()}")
             records = filtered
         }
         Operator.Gt -> {
@@ -75,10 +72,10 @@ fun TableService.applyIndexCondition(
             records = tree.scan(endKey = record.toByteBuffer())
         }
         Operator.Gte -> {
-            records = tree.scan(startKey = record.toByteBuffer())
+            records = tree.scan(startKey = record.toByteBuffer(), allowEqual = true)
         }
         Operator.Lte -> {
-            records = tree.scan(endKey = record.toByteBuffer())
+            records = tree.scan(endKey = record.toByteBuffer(), allowEqual = true)
         }
         else -> {}
     }

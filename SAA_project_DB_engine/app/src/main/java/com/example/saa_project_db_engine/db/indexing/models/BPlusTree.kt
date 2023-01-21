@@ -46,7 +46,8 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
 
     fun scan(
         startKey: ByteBuffer? = logicalMinimumKey,
-        endKey: ByteBuffer? = logicalMaximumKey
+        endKey: ByteBuffer? = logicalMaximumKey,
+        allowEqual: Boolean = false,
     ): Sequence<IndexRecord> {
         if (startKey == endKey) return sequenceOf()
         val isAscending = when {
@@ -66,13 +67,23 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
                         it.key,
                         startKey!!
                     ) < 0
-                } // it < startKey
+                }
                 .takeWhile {
-                    endKey == logicalMaximumKey || compare(
-                        it.key,
-                        endKey
-                    ) <= 0 // TODO: use that for GTE / GT
-                }   // it <= endKey
+                    val compareHandler = {
+                        val comp = {
+                            compare(
+                                it.key,
+                                endKey!!
+                            )
+                        }
+                        if (allowEqual) {
+                            comp() <= 0
+                        } else {
+                            comp() < 0
+                        }
+                    }
+                    endKey == logicalMaximumKey || compareHandler()
+                }
         } else {
             generateSequence(firstNode) { if (it == lastNode) null else createLeafNode(it.previousId) }
                 .flatMap { it.recordsReversed }
@@ -81,13 +92,23 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
                         it.key,
                         startKey
                     ) > 0
-                } // it > startKey
+                }
                 .takeWhile {
-                    endKey == logicalMinimumKey || compare(
-                        it.key,
-                        endKey!!
-                    ) >= 0
-                }  // it >= endKey
+                    val compareHandler = {
+                        val comp = {
+                            compare(
+                                it.key,
+                                endKey!!
+                            )
+                        }
+                        if (allowEqual) {
+                            comp() >= 0
+                        } else {
+                            comp() > 0
+                        }
+                    }
+                    endKey == logicalMinimumKey || compareHandler()
+                }
         }
     }
 

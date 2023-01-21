@@ -86,55 +86,55 @@ class MainActivity : AppCompatActivity() {
 
     private fun testQueries() {
 
-//        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name, BirthDate) VALUES (3, 'DRAGAN', '01.02.2022')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
-//
-//        executor.execute("CreateIndex SampleId ON Sample (Name)")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
-//
-//        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
+        executor.execute("CreateTable Sample(Id:int, Name:string, BirthDate:string default '01.01.2022')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (4, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (6, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name, BirthDate) VALUES (3, 'DRAGAN', '01.02.2022')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (1, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (5, 'PETKAN')")
+
+        executor.execute("CreateIndex SampleId ON Sample (Name)")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (2, 'IVAN')")
+
+        executor.execute("Insert INTO Sample (Id, Name) VALUES (7, 'DRAGAN')")
 
         executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Name, Id")
 
-//        executor.execute("Select Id, Name FROM Sample WHERE (NOT Name == 'IVAN') AND (NOT Name == 'PETKAN') AND Id > '5'")
+        executor.execute("Select Id, Name FROM Sample WHERE (NOT Name == 'IVAN') AND (NOT Name == 'PETKAN') AND Id > '5'")
 
-//        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
+        executor.execute("Update Sample SET Name = 'bruh' WHERE Name == 'IVAN'")
 
-//        executor.execute("Select Id FROM Sample WHERE (NOT Name == 'IVAN' AND Id == '3')")
+        executor.execute("Select Id FROM Sample WHERE (NOT Name == 'IVAN' AND Id == '3')")
 
-//        executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
+        executor.execute("Select Id FROM Sample WHERE Name == 'bruh'")
 
-//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' OR Name == 'PETKAN'")
 
-//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN' ORDER BY Id")
 
-//        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
-//
-//        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
+        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 
-//        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("Select DISTINCT Name, Id FROM Sample WHERE BirthDate == '01.01.2022' ORDER BY Id")
 
-//        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
+        executor.execute("Delete FROM Sample WHERE Name == 'IVAN'")
 
-//        executor.execute("TableInfo Sample")
+        executor.execute("Select Id FROM Sample WHERE Name == 'IVAN'")
 
-//        executor.execute("DropIndex Sample SampleId")
+        executor.execute("TableInfo Sample")
 
-//        executor.execute("ListTables")
-//
-//        executor.execute("ListTables")
-//
-//        executor.execute("DropTable Sample")
+        executor.execute("DropIndex Sample SampleId")
+
+        executor.execute("ListTables")
+
+        executor.execute("ListTables")
+
+        executor.execute("DropTable Sample")
 
         // Select BirthDate FROM Sample WHERE Name == 'IVAN' AND Id > '2'
 
