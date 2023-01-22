@@ -79,7 +79,6 @@ fun TableService.applyIndexCondition(
         }
         else -> {}
     }
-    Log.d("TEST", "NOPE")
     return sequenceToIndexValues(records)
 }
 

@@ -11,7 +11,7 @@ package com.example.saa_project_db_engine.parsers.models
      to array.
 
      If AND sees empty where clause array, assign both its nodes. Later AND's will only have right nodes.
-     In executing, the current result operation will be cached and and's with only right nodes will use the result from
+     In executing, the current result operation will be cached and AND's with only right nodes will use the result from
      the last operation.
  */
 

@@ -21,7 +21,7 @@ private fun partition(arr: SelectResArray, fromIndex: Int, toIndex: Int): Int {
                     swapHandler()
                 }
             } else {
-                if (value < lastElementValue[idx]) { // try strict check until you get to the last index. Then
+                if (value < lastElementValue[idx]) { // try strict check until you get to the last index.
                     swapHandler()
                 }
             }

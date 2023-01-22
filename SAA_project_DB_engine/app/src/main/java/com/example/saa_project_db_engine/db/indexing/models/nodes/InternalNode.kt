@@ -36,7 +36,8 @@ open class InternalNode constructor(page: IndexLogicalPage, keyCompare: KeyCompa
             is FindResult.FirstGreaterThanMatch -> {
                 if (result.index == 0 && previousId != -1)
                     throw Exception()
-                val index = if (result.index == 0) 0 else result.index - 1
+                val index =
+                    if (result.index == 0) 0 else result.index - 1 // -1 because we need the one before the first greater than
                 decodeChildPageId(page.records[index].value)
             }
             else -> -1

@@ -41,7 +41,7 @@ class SelectHandler constructor(
 
     private val distinctSetMap: MutableMap<String, MutableSet<Comparable<Any>>> = mutableMapOf()
 
-    // extract type aliases
+    // TODO: extract type aliases
     private val distinctRes: MutableMap<Pair<String, Comparable<Any>>, MutableList<Pair<String, Comparable<Any>>>> =
         mutableMapOf()
 

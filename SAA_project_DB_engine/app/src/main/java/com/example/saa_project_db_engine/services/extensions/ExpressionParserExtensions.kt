@@ -44,7 +44,7 @@ fun TableService.parseSubExpression(
                 val copied = next.copy(rightNode = rightNode)
                 val nextState = parseLogicalOperation(record, copied)
                 currentCachedOperationResult = applyOperation(
-                    parseState.result, // currentCachedOperationResult
+                    parseState.result,
                     nextState.result,
                     currentOpType!!
                 )

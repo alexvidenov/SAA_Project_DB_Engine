@@ -30,7 +30,6 @@ data class IndexPageData(
             if (nodeTypeString is org.apache.avro.util.Utf8) { // guaranteed
                 nodeTypeString = nodeTypeString.toString()
             }
-            // CRC checks here
             val nodeType = NodeType.fromString(nodeTypeString as String)
             val records = record.get("records") as MutableList<*>
             val mapped = records.map {

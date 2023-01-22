@@ -380,7 +380,7 @@ class StatementParser {
                     if (state.checkIfQuoted()) { // for now, that's how we distinguish between fields and literals
                         val peeked = state.peekQuotedStringWithLength()
                         Log.d("TEST", "PEEKED: $peeked")
-                        if (peeked.length != 0) { // some dumb shit scenario with closing bracket
+                        if (peeked.length != 0) {
                             currentCond.operand2 = peeked.content
                             currentCond.operand2Type = ConditionType.LITERAL
                         }

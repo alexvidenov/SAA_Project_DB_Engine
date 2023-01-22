@@ -68,7 +68,6 @@ fun TableService.indexScan(tableName: String, clause: WhereClause): IndexValues?
                     return logicalOrIndexHandler(tableName, leftCond, rightCond)
                 }
                 LogicalOperator.NOT -> {
-                    Log.d("TEST", "NOT BRO")
                     val invertedCond = rightCond!!
                     invertedCond.operator = invertOperator(invertedCond.operator)
                     val res = singleCond(tableName, invertedCond)

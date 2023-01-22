@@ -1,6 +1,5 @@
 package com.example.saa_project_db_engine.db.base
 
-import android.util.Log
 import com.example.saa_project_db_engine.MAX_PAGE_SIZE
 import com.example.saa_project_db_engine.db.PageFullException
 import com.example.saa_project_db_engine.toLengthAvroByteSize

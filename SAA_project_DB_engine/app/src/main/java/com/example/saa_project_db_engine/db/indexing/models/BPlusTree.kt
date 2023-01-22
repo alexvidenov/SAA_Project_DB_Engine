@@ -147,6 +147,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
         }
     }
 
+    // splits node until it commits successfully. Last resort is to split the root node
     private fun splitNode(node: Node, pathToRoot: Iterator<InternalNode>) {
         if (pathToRoot.hasNext()) {
             val parent = pathToRoot.next()
@@ -178,7 +179,7 @@ class BPlusTree(private val pageManager: IndexPageManager, private val keyCompar
                 InternalNode(leftPage, keyCompare),
                 InternalNode(rightPage, keyCompare)
             )
-            else -> throw Exception() // TODO
+            else -> throw Exception()
         }
         rootNode.addChildNode(leftNode, logicalMinimumKey)
         rootNode.addChildNode(rightNode)

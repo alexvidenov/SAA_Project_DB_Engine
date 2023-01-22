@@ -1,6 +1,6 @@
 package com.example.saa_project_db_engine.services
 
-// TODO: implement implicit indexing on rowId. (since we don't have user defined primary keys yet)
+// TODO: implement implicit indexing on rowId? (since we don't have user defined primary keys yet)
 
 import android.content.Context
 import android.util.Log
@@ -19,7 +19,7 @@ class TableService constructor(ctx: Context) {
     val files: List<String>
         get() = dir.listFiles()?.filter { !it.isDirectory }?.map { it.name }!!
 
-    fun load(tableName: String) { // TODO: reutrn manager data from here to reduce lines
+    fun load(tableName: String) { // TODO: return manager data from here to reduce lines
         loadTable(tableName)
         loadIndex(tableName)
     }
@@ -112,6 +112,7 @@ class TableService constructor(ctx: Context) {
         return updateHandler.rowsUpdated
     }
 
+    // returns: rows deleted
     fun delete(
         tableName: String,
         fields: List<String>,

@@ -4,18 +4,6 @@ import android.util.Log
 import com.example.saa_project_db_engine.parsers.ParseStateStep
 import kotlin.math.min
 
-// NOT AND OR -> PRECEDENCE
-
-// WHERE NOT (Id == 5 OR Name == "test" AND ) AND BirthDate == "21.12.02"
-
-/*
-    WHERE
-        NOT (SUBEXPR)
-        SUBEXPR: (thing AND thing). (thing OR thing), (NOT thing AND NOT thing). (thing OR NOT thing)
-
- */
-
-
 data class ParseStmtState(
     var pos: Int,
     var sql: String,
@@ -80,7 +68,6 @@ data class ParseStmtState(
     fun peekQuotedStringWithLength(): PeekWithLengthReturn {
         Log.d("TEST", "sql[pos] ${sql[pos]}")
         if (sql.length < pos || sql[pos] != '\'' && sql[pos] == ')') {
-            Log.d("TEST", "DA GO TAKOVAM")
             return PeekWithLengthReturn("", 0)
         }
         for (i in (pos + 1) until sql.length) {
