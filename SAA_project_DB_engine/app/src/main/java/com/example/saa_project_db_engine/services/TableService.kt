@@ -27,7 +27,7 @@ class TableService constructor(ctx: Context) {
     fun insertRows(
         tableName: String, fields: MutableList<String>,
         inserts: MutableList<MutableList<String>>
-    ) {
+    ): Int {
         load(tableName)
         val data = managerPool[tableName]!!
         val tableRows = mutableListOf<TableRow>()
@@ -62,6 +62,8 @@ class TableService constructor(ctx: Context) {
         }
 
         applyConsistencyOnInsert(tableName, rows)
+
+        return rows.size
     }
 
     private fun whereClauseWithHandlers(
@@ -86,10 +88,11 @@ class TableService constructor(ctx: Context) {
         }
     }
 
+    // returns: rows updated
     fun update(
         tableName: String, fields: List<String>, whereFields: List<String>,
         clauseType: WhereClause, updates: Map<String, String>,
-    ) {
+    ): Int {
         load(tableName)
         val data = managerPool[tableName]!!
         val cbks = mutableListOf<() -> Unit>()
@@ -106,6 +109,7 @@ class TableService constructor(ctx: Context) {
         }
         applyConsistencyOnUpdate(tableName, updateHandler.oldNewPairList)
         handler.handler.cleanup()
+        return updateHandler.rowsUpdated
     }
 
     fun delete(
@@ -113,14 +117,13 @@ class TableService constructor(ctx: Context) {
         fields: List<String>,
         whereFields: List<String>,
         clauseType: WhereClause,
-    ) {
+    ): Int {
         load(tableName)
         // extract this as well
         val cbks = mutableListOf<() -> Unit>()
         val deleteHandler = DeleteHandler()
         val handler = QueryTypeHandler(handler = deleteHandler, persistCbk = {
             it?.let {
-                Log.d("TEST", "callback")
                 cbks.add(it)
             }
         })
@@ -130,6 +133,7 @@ class TableService constructor(ctx: Context) {
         }
         applyConsistencyOnDelete(tableName, deleteHandler.rows)
         handler.handler.cleanup()
+        return deleteHandler.rows.size
     }
 
     fun select(

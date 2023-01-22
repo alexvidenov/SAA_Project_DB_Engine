@@ -12,8 +12,14 @@ import com.example.saa_project_db_engine.services.TableService
 import com.example.saa_project_db_engine.services.extensions.*
 import com.example.saa_project_db_engine.services.models.TableInfo
 import com.example.saa_project_db_engine.services.models.WhereClause
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 class SchemaExecutor constructor(ctx: Context) {
     private val tableService = TableService(ctx)
@@ -25,11 +31,12 @@ class SchemaExecutor constructor(ctx: Context) {
     val state: StateFlow<SelectResultModel>
         get() = _state
 
+    private val _events = MutableSharedFlow<String>()
+    val events: SharedFlow<String>
+        get() = _events
+
     private var currentTables: List<String> = mutableListOf()
     private var currentTableInfo: TableInfo? = null
-
-    // here emit all the "Updated 56 rows. Deleted 56 rows, etc".
-    // private val _events = MutableSharedFlow<>()
 
     fun execute(raw: String) {
         val parsed = parser.parseQuery(raw)
@@ -65,7 +72,10 @@ class SchemaExecutor constructor(ctx: Context) {
                 Log.d("TEST", "TABLE INFO: $currentTableInfo")
             }
             QueryType.Insert -> {
-                tableService.insertRows(query.table, query.fields, query.inserts)
+                val rows = tableService.insertRows(query.table, query.fields, query.inserts)
+                runBlocking {
+                    _events.emit("$rows rows inserted")
+                }
             }
             QueryType.Select -> {
                 val res = handleGeneralCrudOperation(
@@ -90,7 +100,7 @@ class SchemaExecutor constructor(ctx: Context) {
                 _state.value = res
             }
             QueryType.Update -> {
-                handleGeneralCrudOperation(
+                val rowsUpdated = handleGeneralCrudOperation(
                     query.table,
                     query.fields,
                     query.whereFields,
@@ -108,15 +118,21 @@ class SchemaExecutor constructor(ctx: Context) {
                         query.updates
                     )
                 }
+                runBlocking {
+                    _events.emit("${rowsUpdated} rows updated")
+                }
             }
             QueryType.Delete -> {
-                handleGeneralCrudOperation(
+                val deletedRows = handleGeneralCrudOperation(
                     query.table,
                     query.fields,
                     query.whereFields,
                     query.operations,
                     query.currentCond, tableService::delete
                 )
+                runBlocking {
+                    _events.emit("${deletedRows} rows deleted")
+                }
             }
             QueryType.CreateIndex -> {
                 tableService.createIndex(query.table, query.indexName, query.fields.first())

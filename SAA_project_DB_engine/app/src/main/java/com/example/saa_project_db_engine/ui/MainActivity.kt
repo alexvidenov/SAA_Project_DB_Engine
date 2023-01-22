@@ -2,6 +2,7 @@ package com.example.saa_project_db_engine.ui
 
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.saa_project_db_engine.R
@@ -13,7 +14,10 @@ import com.google.android.material.textfield.TextInputLayout
 import de.codecrafters.tableview.TableView
 import de.codecrafters.tableview.toolkit.SimpleTableDataAdapter
 import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tableView: TableView<Array<String>>
@@ -36,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         fab = findViewById(R.id.fab)
 
         observeQueryResults()
+        observeQueryEvents()
         observeExecuteButton()
         observeFabClicked()
 
@@ -53,6 +58,20 @@ class MainActivity : AppCompatActivity() {
                 updateTableView(mapped, *resModel.fields.toTypedArray())
             }
         }
+    }
+
+    private fun observeQueryEvents() {
+        lifecycleScope.launch {
+            executor.events.collect {
+                withContext(Dispatchers.Main) {
+                    showToast(it)
+                }
+            }
+        }
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
     private fun observeExecuteButton() {
